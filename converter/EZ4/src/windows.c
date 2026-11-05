@@ -102,6 +102,7 @@ static LRESULT CALLBACK proc(HWND h,UINT message,WPARAM w,LPARAM l) {
                 L"2. Save as: choose a NEW .gba filename.\r\n"
                 L"3. Create ROM: restore and verify V0.9.5.\r\n\r\n"
                 L"No separate data file, installation or network is needed.\r\n"
+                L"Existing files are never overwritten. Both supported editions produce the same 0.9.5 ROM.\r\n"
                 L"Supported DIABDAT.MPQ editions:\r\n"
                 L"Diablo 1.0 (517,501,242 bytes)\r\n"
                 L"GOG (517,501,282 bytes)\r\n"

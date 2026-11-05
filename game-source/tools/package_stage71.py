@@ -30,7 +30,19 @@ for index,row in enumerate(spells['spells']):
   if f>=8 and score>best[0]:best=(score,f)
  im.seek(best[1]);contact.paste(im.convert('RGB').resize((360,264),Image.Resampling.NEAREST),((index%4)*360,(index//4)*264));row['preview_frame']=best[1]
 contact.save(O/'stage71-spell-preview.png');shutil.copy2(V/'spells/18-Nova.gif',O/'stage71-nova.gif');shutil.copy2(R/'build/diablo-gba-assets.gba',O/'diablo-gba-stage71.gba')
-readme='''Stage71 마법27종 시연\n\n각 GIF는 실제 mGBA 롬 실행 화면입니다.\n고정된 고체력 표적을 배치하여 효과를 볼 수 있게 했습니다.\n부활/타인 치유는 직렬 입력만 대체한 로컬2인 테스트이며 실물 케이블 검사는 아닙니다.\n공격은 실제 HP 감소, 회복/상태/이동은 실제 상태 변화로 검사했습니다.\nreport.json에는 각 시연의 전후 값과 테스트 롬 해시가 있습니다.\nspell-source-stage71.json은 원본 spelldat의27종×9항목 비교 결과입니다.\n노바는16갈래 타원, 원본 직접 축소 그래픽입니다.\n롤백 저장과도 호환되지 않는 새 저장 형식이므로 배포 롬은 새 캠페인으로 시작하세요.\n\n전체 변경과 제한은 함께 제공된 COMPLETION-STAGE71.md를 참고하세요.\n'''
+readme='''Stage71: demonstrations of 27 spells
+
+Each GIF shows an actual ROM running in mGBA.
+Stationary targets with high HP make the effects visible.
+Resurrect and Heal Other use a local two-player test that replaces serial input only; this is not a physical link-cable test.
+Attacks were checked for actual HP loss; healing, status and movement spells were checked for actual state changes.
+report.json contains before/after values and test ROM hashes for each demonstration.
+spell-source-stage71.json compares 27 spells across 9 fields against the original spelldat.
+Nova uses a 16-direction ellipse and graphics downscaled directly from the original.
+Start a new campaign with the release ROM: the new save format is also incompatible with rollback saves.
+
+See the included COMPLETION-STAGE71.md for all changes and limitations.
+'''
 with zipfile.ZipFile(O/'stage71-spells-27-gifs.zip','w',zipfile.ZIP_DEFLATED,6) as z:
  for row in spells['spells']:z.write(V/'spells'/row['filename'],row['filename'])
  z.writestr('README.txt',readme);z.write(V/'spells/report.json','report.json');z.write(R/'generated/spell-source-stage71.json','spell-source-stage71.json');z.write(R/'COMPLETION-STAGE71.md','COMPLETION-STAGE71.md');z.write(O/'stage71-spell-preview.png','preview.png')

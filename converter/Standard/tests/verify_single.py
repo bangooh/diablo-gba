@@ -56,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix="single-exe-test-") as temporary:
     work = Path(temporary)
     driver = work/"standalone-builder"
     shutil.copy2(args.driver, driver)
-    output = work/"검증 ROM.gba"
+    output = work/"검증 ROM.gba"  # "Verification ROM": intentionally tests Korean filenames.
 
     def run(name, mode="normal", expect=0, source=mpq, target=output):
         result = subprocess.run([str(driver), str(source), str(target), mode], cwd=work,

@@ -4,10 +4,11 @@ r=Path(__file__).resolve().parents[1];v=r/'generated/stage73-validation';o=r.par
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 build=json.loads((v/'release-rom/diablo-gba-assets-build-report.json').read_text());native=json.loads((v/'final-native/report.json').read_text());spells=json.loads((v/'final-spells/report.json').read_text())
 assert native['result']==spells['result']=='PASS';assert native['romSha256']==spells['romSha256']==build['sha256'];assert sha(v/'release-rom/diablo-gba-assets.gba')==build['sha256']
-p=r/'APOCALYPSE-GUARDIAN-STAGE73.md';s=p.read_text().replace('IWRAM 814바이트','IWRAM 916바이트')
-s+='\n## 최종 미니맵 ON 측정\n\n|장면|평균 FPS|최저 1초 FPS|\n|---|---:|---:|\n'
-for row in native['performance']:s+=f"|{ {24:'아포칼립스 연속 시전',13:'가디언'}.get(row.get('spell'),'이동')}|{row['averageFps']:.1f}|{row['lowestOneSecondFps']:.1f}|\n"
-s+='\n고정된 L1 방과 몬스터8마리, 각 720하드웨어 프레임의 에뮬레이터 측정입니다. 모든 전투에서 최소24FPS를 보장하지 않습니다. 사용자 요청에 따라 최종판은 네 개씩 표시합니다. 두 개씩보다 연출 시간이 절반이며, 시전 중 FPS 하락을 허용한 설정입니다.\n';p.write_text(s)
+# Legacy Korean input below means 'IWRAM 814 bytes'; normalize the updated value to English.
+p=r/'APOCALYPSE-GUARDIAN-STAGE73.md';s=p.read_text().replace('IWRAM 814바이트','IWRAM 916 bytes').replace('IWRAM 814 bytes','IWRAM 916 bytes')
+s+='\n## Final measurements with minimap ON\n\n|Scene|Average FPS|Lowest 1-second FPS|\n|---|---:|---:|\n'
+for row in native['performance']:s+=f"|{ {24:'Repeated Apocalypse casts',13:'Guardian'}.get(row.get('spell'),'Movement')}|{row['averageFps']:.1f}|{row['lowestOneSecondFps']:.1f}|\n"
+s+='\nEmulator measurements use a fixed L1 room with 8 monsters and 720 hardware frames per case. They do not guarantee a minimum of 24 FPS in all combat. At the user\'s request, the final version displays four explosions at a time. Presentation takes half as long as with two at a time, accepting FPS drops during casting.\n';p.write_text(s)
 report={'build':build,'native':native,'spellDemos':spells,'host':'PASS ASan/UBSan all112, full6400cell queue, slot saturation, repeated casts, reset','atlasCases':1684,'guardian':'PASS all original emergence15/idle14/attack3 frames','saveVersion':130,'linkVersion':139,'limits':['Original positions, coalesced waiting cells on repeated casts','4 concurrent explosions; long presentation with many targets','No physical GBA/link verification']}
 (r/'generated/stage73-release-report.json').write_text(json.dumps(report,indent=2)+'\n')
 shutil.copy2(v/'release-rom/diablo-gba-assets.gba',o/'diablo-gba-stage73.gba');shutil.copy2(v/'guardian-comparison.png',o/'stage73-guardian-comparison.png');shutil.copy2(v/'final-native/guardian-isolated.gif',o/'stage73-guardian.gif');shutil.copy2(v/'final-spells/24-Apocalypse.gif',o/'stage73-apocalypse.gif')

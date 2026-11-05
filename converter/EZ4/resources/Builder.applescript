@@ -3,7 +3,7 @@ on run arguments
     set appTitle to "Diablo GBA ROM Builder · 0.9.5 EZ-Flash IV"
     try
         activate
-        set languageChoice to button returned of (display dialog "Diablo GBA ROM Builder for macOS" & return & return & "ROM: V0.9.5 · 32 MiB" & return & "Unofficial fan project. Not affiliated with Nintendo or Blizzard." & return & "Select your language / 언어 선택" with title appTitle buttons {"Cancel", "English", "한국어"} default button "한국어" cancel button "Cancel")
+        set languageChoice to button returned of (display dialog "Diablo GBA ROM Builder for macOS" & return & return & "ROM: V0.9.5 · 32 MiB" & return & "Unofficial fan project. Not affiliated with Nintendo or Blizzard." & return & "Select your language / 언어 선택" with title appTitle buttons {"Cancel", "English", "한국어"} default button "English" cancel button "Cancel")
         set korean to languageChoice is "한국어"
         if korean then
             set mpqPrompt to "DIABDAT.MPQ 선택: Diablo 1.0 (517,501,242바이트) 또는 GOG (517,501,282바이트)."
@@ -48,6 +48,11 @@ on run arguments
                 if errorNumber is 7 then set explanation to "저장할 수 없습니다. 쓰기 가능한 맥 내부 폴더와 40MB 이상의 여유 공간을 확인하세요."
             else
                 set explanation to "ROM creation failed. Check the original MPQ, use a new .gba filename and a writable local folder."
+                if errorNumber is 9 then set explanation to "That file already exists. Choose a different filename."
+                if errorNumber is 4 then set explanation to "Cannot read DIABDAT.MPQ. Supported editions: Diablo 1.0 (517,501,242 bytes) or GOG (517,501,282 bytes)."
+                if errorNumber is 5 then set explanation to "This MPQ version is unsupported or the app data is damaged. No ROM was saved."
+                if errorNumber is 10 then set explanation to "The output filename must end in .gba."
+                if errorNumber is 7 then set explanation to "Cannot save the ROM. Choose a writable local folder on your Mac with at least 40MB of free space."
             end if
             set lastLine to last paragraph of errorMessage
             display dialog explanation & return & return & lastLine with title appTitle buttons {"OK"} default button "OK" with icon caution

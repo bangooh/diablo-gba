@@ -42,26 +42,26 @@ host=json.loads((a.output/'host/host-summary.json').read_text());assert host['re
 summary={'result':'PASS','baselineRomSha256':baseline['romSha256'],'candidateRomSha256':candidate['romSha256'],'productionProjectEdited':False,'sourceFiles':names,'otherSourceFilesByteIdentical':len(unchanged),'resources':{'baseline':prov['build_report'],'candidate':build,'ewramGrowth':build['ewram_static_bytes']-prov['build_report']['ewram_static_bytes'],'iwramGrowth':build['iwram_code_bytes']-prov['build_report']['iwram_code_bytes']},'metrics':metrics,'nativeGameplayTickComparisons':tick_comparisons,'projectileOam':{'beforePositions':old,'afterPositions':new,'afterSteps':steps,'interpretation':'More visible intermediate positions; draw gaps can still skip presentation samples. Simulation positions and collision schedule are unchanged.'},'host':host,'preserved':['All world light sources remain available to lighting_at; only hardware-window cache keys reject offscreen/contained ellipses.','Existing largest-dark-gap two-window approximation, palettes, black mask, gamma and brightness unchanged.','Game hit/release/cost/range/velocity/RNG code is byte-identical.','Fixed area effects, golem, burst, source-born projectiles, paused view and co-op retain authoritative positions.','Original six cast frames and release-frame2 mapping retained.'],'limitations':['Native mGBA only; no physical GBA measurement.','Quiet Warrior L1 Firebolt benchmark cannot guarantee minimum24FPS for every combat scene.','First cast retains one50.23ms draw gap.','Cast wind-up frame holds remain because the existing art has only six selected poses.','Co-op continues its existing projectile presentation timing.']}
 (a.output/'summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
 (a.output/'candidate-build.json').write_text(json.dumps(json.loads((a.candidate/'build/private-build-provenance.json').read_text()),indent=2)+'\n')
-md='''# Stage58 Firebolt 적용 후보
+md='''# Stage58 Firebolt candidate
 
-생산 파일은 수정하지 않은 private 후보입니다. 변경 파일은 `projectile_view.inc`, `lighting.inc`, `hardware_light.inc`와 `gba_mode0.c`의 세 군데 연결부입니다.
+This is a private candidate; production files were unchanged. Changes cover `projectile_view.inc`, `lighting.inc`, `hardware_light.inc`, and three integration points in `gba_mode0.c`.
 
-| 장면 | Stage56 평균/최저약1초 | 적용 후보 평균/최저약1초 |
+| Scene | Stage56 average/lowest approximately 1-second FPS | Candidate average/lowest approximately 1-second FPS |
 |---|---:|---:|
-| 정지 |59.73 /59.73|59.73 /59.73|
-| Firebolt1회 |44.13 /38.82|55.75 /50.77|
-| Firebolt반복 |41.44 /37.83|54.13 /49.77|
-| 바로 벽 충돌 |57.40 /54.75|57.40 /54.75|
+| Idle |59.73 /59.73|59.73 /59.73|
+| One Firebolt |44.13 /38.82|55.75 /50.77|
+| Repeated Firebolts |41.44 /37.83|54.13 /49.77|
+| Immediate wall collision |57.40 /54.75|57.40 /54.75|
 
-조명의 전체 world source 목록은 유지합니다. 하드웨어 마스크 캐시 키에서만 화면 밖/완전 포함 광원을 제외하고, 변경된 광원의 이전·새 세로 범위만 다시 계산합니다. 나머지 행은 기존 테이블에서 복사하며 IRQ가 읽는 live 테이블은 수정하지 않습니다.
+The complete list of world light sources is retained. Offscreen or fully contained lights are excluded only from hardware-mask cache keys. Only the old and new vertical ranges of changed lights are recalculated. Other rows are copied from the previous table; the live table read by the IRQ is never modified.
 
-투사체는 기존 현재 위치와 그 위치를 만든 velocity를 사용해 표시 위치만 역보간합니다. 판정 좌표를 넘지 않고, 새로 생겨 아직 이동하지 않은 투사체와 고정 마법·골렘·폭발·일시정지·멀티플레이 좌표는 유지합니다. 표시 스프라이트와 광원이 같은 보간 좌표를 사용합니다.
+Only projectile display positions are interpolated backward from the existing current position using the velocity that produced it. Display positions never pass the gameplay position. Newly spawned, unmoved projectiles, fixed spells, golems, explosions, paused views and multiplayer coordinates retain their existing positions. Sprites and lights use the same interpolated coordinates.
 
-시전수·마나·공격 상태와 Arrow 위치/속도/life는 같은 게임 틱에서 기준과 일치합니다. 모든 판정·마나·속도·거리·RNG 관련 C 소스도 그대로입니다. 실제 Firebolt 표시 위치는8픽셀씩 건너뛰던 것에서 더 많은 중간 위치로 바뀌었습니다. 렌더 지연이 있는 순간에는 중간 샘플을 건너뛸 수 있습니다.
+Cast counts, mana, attack state and Arrow position/velocity/life match the baseline at identical game ticks. All C source governing collision, mana, speed, range and RNG is unchanged. Firebolt now displays more intermediate positions instead of jumping 8 pixels at a time. Rendering delays can still skip intermediate samples.
 
-정적 EWRAM+8B, IWRAM+36B입니다. projectile_phase는4B이며 별도 투사체 좌표 배열은 없습니다. ASan/UBSan660,099조건, runtime agent의 기존 조명 oracle과 증분 갱신 oracle을 통과했습니다. 통합 ROM에서는 최종 조합으로 다시 검증해야 합니다.
+Static EWRAM increases by 8 bytes and IWRAM by 36 bytes. projectile_phase uses 4 bytes; no separate projectile-coordinate array is added. The candidate passed 660,099 ASan/UBSan conditions and the runtime agent's existing lighting oracle and incremental-update oracle. The final integrated ROM still requires validation of the combined changes.
 
-첫 시전의50.2ms 지연1회와 준비 자세의 긴 홀드는 남습니다. 6장짜리 기존 자산의2번 그림을 실제 발사 시점에 맞추는 동작은 유지했습니다. 실기 측정이나 전체 전투24FPS 보장은 아닙니다.
+One 50.2ms first-cast delay and long wind-up holds remain. The existing six-frame asset still maps frame 2 to the actual release time. These are not physical hardware measurements or a guarantee of 24 FPS in every combat scene.
 '''
 (a.output/'analysis.md').write_text(md)
 print(json.dumps({'result':'PASS','tickComparisons':tick_comparisons,'beforeOamPositions':len(old),'afterOamPositions':len(new),'sourceDiff':str(a.output/'source.diff')},ensure_ascii=False))

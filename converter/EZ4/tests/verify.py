@@ -28,7 +28,7 @@ def main():
     checks = []
     with tempfile.TemporaryDirectory(prefix="builder095-") as work:
         root = Path(work)
-        output = root / "검증한 ROM.gba"
+        output = root / "검증한 ROM.gba"  # "Verified ROM": intentionally tests Korean filenames.
 
         def run(name, *, source=mpq, package=pack, target=output, expect=0, mode=None):
             command = [str(driver if mode else binary), str(source), str(package), str(target)]
@@ -85,9 +85,9 @@ def main():
         dangling = root / "dangling.gba"
         dangling.symlink_to(root / "missing-target")
         run("Dangling symlink output preserved", target=dangling, expect=9)
-        unicode_mpq = root / "원본 디아블로.MPQ"
+        unicode_mpq = root / "원본 디아블로.MPQ"  # "Original Diablo": Unicode MPQ path fixture.
         unicode_mpq.symlink_to(mpq)
-        unicode_pack = root / "변환 자료.dgb"
+        unicode_pack = root / "변환 자료.dgb"  # "Conversion data": Unicode package path fixture.
         unicode_pack.symlink_to(pack)
         run("Unicode and space characters in all input paths", source=unicode_mpq, package=unicode_pack, target=new)
         assert digest(new) == ROM_HASH

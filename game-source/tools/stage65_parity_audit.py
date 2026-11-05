@@ -47,25 +47,25 @@ report={'result':'PASS','scope':'Source audit, not a campaign playthrough. Under
 for name,records in [('missing-monsters.csv',missing),('ordinary-uniques.csv',unique)]:
  with (out/name).open('w',newline='') as f:
   w=csv.DictWriter(f,fieldnames=list(records[0]));w.writeheader();w.writerows(records)
-lines=['# 원본 대비 몬스터·일반 유니크·지역 BGM — Stage65', '',
- '보존된 Diablo 본편 원본과 현재 실행 소스를 대조했다. Hellfire, 원본에서 비활성인 기본 몬스터, 사용하지 않는 표 항목을 정상 출현 몬스터 누락 수에 합산하지 않았다. 새 몬스터나 지역 음악을 추가한 작업은 아니며, 이번 변경은 상점 UI다.', '',
- '## 기본 몬스터', '',
- f'현재 런타임 종류는 {len(bodies)+len(extras)}개다(본체·퀘스트 적 {len(bodies)}개, 일반 유니크 리더 4개, 해당 부하용 별도 ID 4개). 원본의 활성 기본 몬스터 88개 항목 중 대응하는 본체 정의가 없는 항목은 {len(missing)}개다. 이름뿐 아니라 원본 AI와 그래픽 경로를 함께 비교했다. 본체가 있다고 해서 AI·일반 배치까지 완전히 같다는 뜻은 아니다.', '',
- '| 원본 AI 계열 | 빠진 종류·변종 |','| --- | --- |']
+lines=['# Monsters, ordinary uniques and regional BGM vs the original — Stage65', '',
+ 'This compares the preserved retail Diablo source with the current runtime source. Hellfire, originally disabled base monsters and unused table entries are excluded from missing normally spawning monster counts. This stage changes the shop UI; it does not add monsters or regional music.', '',
+ '## Base monsters', '',
+ f'There are {len(bodies)+len(extras)} runtime kinds ({len(bodies)} base/quest enemies, 4 ordinary unique leaders and 4 separate minion IDs). Of the 88 active original base-monster entries, {len(missing)} have no corresponding body definition. Comparisons include original AI and graphics paths as well as names. A matching body does not establish full AI or ordinary spawn parity.', '',
+ '| Original AI family | Missing kinds/variants |','| --- | --- |']
 for ai,names in sorted(groups.items()):lines.append('| '+ai+' | '+', '.join(names)+' |')
-lines+=['','박쥐(BAT), 산성 짐승(ACID), 마그마(MAGMA), 번개 악마(STORM), 가고일(GARG), 발록(MEGA), 뱀(SNAKE)은 각 4종 계열 전체가 빠져 있다. 나머지는 기존 계열의 일부 변종 누락이다. Skeleton은 궁수형, Stone Clan·Night Clan은 궁수형을 뜻한다. 같은 이름의 근접형이 있다고 해서 해당 변종이 구현된 것으로 세지 않았다.', '',
- '## 일반 유니크 몬스터', '',
- '연결된 일반 유니크는 **Bonehead Keenaxe, Rotcarnage, Breakspine, Blackstorm** 4종이며 출현 층은 각각 2·3·9·10층이다. Butcher, Leoric, Lazarus 등 퀘스트 보스는 이 4종에 포함하지 않았다.', '',
- '원본 일반 유니크 표는 87행이다. 이 중 1~16층과 기본 몬스터 활성 여부만으로 걸러진 후보는 72행이며, 구현된 4행을 뺀 68행에는 현재 연결이 없다. 실제 출현에는 원본 `PlaceUniques`의 해당 층 몬스터 명단 조건도 필요하므로 “매 캠페인에 68마리가 빠진다”는 뜻은 아니다. 나머지 비활성·범위 밖 15행을 정상 출현 누락에 더하지 않았다.', '',
- '미연결 예: Bladeskin the Slasher, Pukerat the Unclean, Boneripper, Rotfeast the Hungry, Bongo, Shadowbite, Deadeye, Blackash the Burning, Bloodskin Darkbow, Deathshade Fleshmaul, The Flayer, Witchfire the Unholy, Sir Gorash. 전체 이름·층·기본 종류·연결 여부는 `generated/stage65-validation/parity/ordinary-uniques.csv`에 있다.', '',
- '## 지역별 BGM', '',
- '| 영역 | 원본 | 현재 |','| --- | --- |','| 마을 | DTowne.wav | 구현 |','| 성당 1~4층 | DLvlA.wav | 구현 |','| 지하묘지 5~8층 | DLvlB.wav | 미구현, 성당 곡 재사용 |','| 동굴 9~12층 | DLvlC.wav | 미구현, 성당 곡 재사용 |','| 지옥 13~16층 | DLvlD.wav | 미구현, 성당 곡 재사용 |','| 메인 메뉴 | Dintro.wav | 구현 |', '',
- '`src/gba_mode0.c`의 지역 로딩은 여전히 `audio_start(game.area?0:1)`이므로 던전·별도 퀘스트 지역은 같은 던전 트랙으로 연결된다. 엔딩 음악은 별도 경로로 이미 있으며 탐험 BGM 누락과 구분한다.', '',
- '## 그 밖에 남아 있는 차이', '',
- '| 항목 | 현재 차이 |','| --- | --- |','| 멀티 전용 쉬라인 | Spooky·Tainted는 여전히 제외한다. Hidden·Gloomy·Weird는 이미 구현했다. |','| 동시 발사체 | 화살·마법 공유8슬롯이며 원본은125 missile 슬롯이다. 같은 마법 이름의 지원과 대량 발사체 재현은 별개다. |','| 마을 아이템 버리기 | 일반 아이템을 마을 바닥에 버리는 동작은 차단되어 있다. |','| NPC 대사 음성 | 인사말8개 위주이며 전체 퀘스트 대사 음성은 없다. 이는 이전에 요청한 용량 절약 정책이다. |', '',
- '근거: src/environment_objects.inc의 shrine_type_supported(18·25 제외), src/game.h의 MAX_ARROWS, 원본 defs.h의 MAXMISSILES, src/items.c의 INV_TOWN 반환, generated/greeting_audio.h. 그래픽 축소·엔딩 통일·음성 축소처럼 승인된 표현 선택을 새 버그로 분류하지 않았다.', '',
- '## 이전 감사 문서와 달라진 부분', '',
- 'Stage64에서 테마 방 17종, 분수 4종, 염소 쉬라인·가마솥, Hidden/Gloomy/Weird 장비 영구 효과를 추가했다. 따라서 Stage61 문서에 남아 있는 이 항목들의 “미구현” 표시는 당시 기록이며 현재 누락 목록으로 사용하면 안 된다.', '',
- '검증은 소스와 생성 표의 대조다. 전체 캠페인 플레이·원본 AI 완전 일치·실기 최소 24FPS를 보증하지 않는다. 원본과 현재 파일의 해시 및 상세 행은 `generated/stage65-validation/parity/report.json`에 보존한다.', '']
+lines+=['','All four variants are missing in each of the BAT, ACID, MAGMA, STORM, GARG, MEGA and SNAKE families. Other omissions are individual variants within existing families. Skeleton, Stone Clan and Night Clan refer to archer variants here; a melee variant with the same name does not count as implementing the archer.', '',
+ '## Ordinary unique monsters', '',
+ 'The four connected ordinary uniques are **Bonehead Keenaxe, Rotcarnage, Breakspine and Blackstorm**, on floors 2, 3, 9 and 10 respectively. Quest bosses such as the Butcher, Leoric and Lazarus are excluded from these four.', '',
+ 'The original ordinary-unique table has 87 rows. Filtering only for floors 1-16 and active base monsters leaves 72 candidates; 68 remain unconnected after subtracting the four implemented rows. Actual spawning also requires the floor monster-roster conditions in the original `PlaceUniques`, so this does not mean 68 monsters are missing from every campaign. The remaining 15 disabled/out-of-range rows are excluded from normal-spawn omissions.', '',
+ 'Unconnected examples: Bladeskin the Slasher, Pukerat the Unclean, Boneripper, Rotfeast the Hungry, Bongo, Shadowbite, Deadeye, Blackash the Burning, Bloodskin Darkbow, Deathshade Fleshmaul, The Flayer, Witchfire the Unholy and Sir Gorash. Full names, floors, base types and connection status are in `generated/stage65-validation/parity/ordinary-uniques.csv`.', '',
+ '## Regional BGM', '',
+ '| Region | Original | Current |','| --- | --- | --- |','| Town | DTowne.wav | Implemented |','| Cathedral, floors 1-4 | DLvlA.wav | Implemented |','| Catacombs, floors 5-8 | DLvlB.wav | Missing; reuses Cathedral music |','| Caves, floors 9-12 | DLvlC.wav | Missing; reuses Cathedral music |','| Hell, floors 13-16 | DLvlD.wav | Missing; reuses Cathedral music |','| Main menu | Dintro.wav | Implemented |', '',
+ 'Region loading in `src/gba_mode0.c` still uses `audio_start(game.area?0:1)`, routing dungeons and separate quest areas to the same dungeon track. Ending music already has a separate path and is distinguished from missing exploration BGM.', '',
+ '## Other remaining differences', '',
+ '| Item | Current difference |','| --- | --- |','| Multiplayer-only shrines | Spooky and Tainted remain excluded. Hidden, Gloomy and Weird are implemented. |','| Simultaneous projectiles | Arrows and spells share 8 slots; the original has 125 missile slots. Supporting a spell name does not imply reproducing its full projectile count. |','| Dropping items in town | Dropping ordinary items onto the town floor is blocked. |','| NPC speech | Primarily 8 greetings; full quest speech is absent, following the previously requested space-saving policy. |', '',
+ 'Evidence: shrine_type_supported in src/environment_objects.inc (18 and 25 excluded), MAX_ARROWS in src/game.h, MAXMISSILES in the original defs.h, the INV_TOWN return in src/items.c, and generated/greeting_audio.h. Approved presentation choices such as downscaled graphics, unified endings and reduced speech are not classified as new bugs.', '',
+ '## Changes since the earlier audit', '',
+ 'Stage64 added 17 theme-room kinds, 4 fountains, Goat Shrine and Cauldron, and permanent Hidden/Gloomy/Weird equipment effects. Their unimplemented labels in Stage61 are historical records and must not be used as the current missing-feature list.', '',
+ 'Validation compares source and generated tables. It does not guarantee a complete campaign playthrough, exact original AI parity or a minimum of 24 FPS on physical hardware. Original/current file hashes and detailed rows are preserved in `generated/stage65-validation/parity/report.json`.', '']
 (ROOT/'PARITY-AUDIT-STAGE65.md').write_text('\n'.join(lines))
 print(json.dumps({'result':'PASS','missing_base_rows':len(missing),'ordinary_uniques_present':sorted(leaders),'candidate_general_rows':sum(r['campaign_level_candidate'] for r in unique),'regional_BGM_missing':3}))

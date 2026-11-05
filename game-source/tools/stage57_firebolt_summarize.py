@@ -55,32 +55,32 @@ summary={'result':'PASS','productionRomSha256':reports['production']['romSha256'
  'excludedOrUnproven':['Disabling only sound effects preserves exactly the render cadence in the tested cast; BGM remains active.','Terrain cache endpoints and sampled dirty slots are unchanged and hardware lighting remains enabled. Source shows no geometry/light-band invalidation in this stationary fixture, but internal terrain-call cycle counters were not added.','First release still has one50.23ms draw gap with projectile lights omitted; the exact residual cost has not been isolated.','Private no-arrow-light ROM is a diagnostic control, not a proposed shipped change. Offscreen-only variant is also unshipped and has not passed a full lighting regression suite.'],
  'limits':['Quiet single-player L1 Warrior with learned level1 Firebolt; it does not estimate all spells/classes/floors or crowded combat.','Single-open180HW includes offscreen flight and ends while projectile remains active; active-window FPS is not a complete projectile-lifetime average.','Near-wall projectile exists only3HW; its phase FPS is too short for a sustainable-rate claim.','Hardware-frame-end PC samples are coarse attribution, not cycle percentages.','Fresh baseline compiled from all sources reproduces the exact published ROM bytes; variants recompile onlygba_mode0.c with the isolated lighting include.']}
 (a.folder/'summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
-md='''# Stage57 Firebolt 원인 분석
+md='''# Stage57 Firebolt cause analysis
 
-생산 Stage56 소스·ROM은 수정하지 않았습니다. 몬스터가 없는 동일 L1 장면에서 실제 B 입력으로 비교했습니다. 새로 전체 컴파일한 기준 ROM은 배포된 Stage56과 바이트 단위로 같습니다.
+The production Stage56 source and ROM were unchanged. Tests used actual B input in the same monster-free L1 scene. A full rebuild of the baseline matched the released Stage56 ROM byte for byte.
 
-| 조건 | 평균 FPS | 최저 약1초 FPS | 최대 갱신 간격 |
+| Condition | Average FPS | Lowest approximately 1-second FPS | Maximum update gap |
 |---|---:|---:|---:|
-| 정지 |59.73|59.73|16.7ms|
-| Firebolt 1회, 3초 관찰 |44.13|38.82|50.2ms|
-| Firebolt 6회, 8초 관찰 |41.44|37.83|50.2ms|
-| 1회, 효과음만 끔 |44.13|38.82|50.2ms|
-| 1회, 투사체 광원만 제외한 진단 ROM |56.74|52.76|50.2ms|
-| 6회, 투사체 광원만 제외한 진단 ROM |57.99|52.76|50.2ms|
-| 1회, 화면 밖 투사체 광원만 제외한 진단 ROM |53.42|43.80|50.2ms|
-| 6회, 화면 밖 투사체 광원만 제외한 진단 ROM |45.79|40.81|50.2ms|
+| Idle |59.73|59.73|16.7ms|
+| One Firebolt, 3-second observation |44.13|38.82|50.2ms|
+| Six Firebolts, 8-second observation |41.44|37.83|50.2ms|
+| One cast, sound effects disabled only |44.13|38.82|50.2ms|
+| One cast, diagnostic ROM excluding projectile lights only |56.74|52.76|50.2ms|
+| Six casts, diagnostic ROM excluding projectile lights only |57.99|52.76|50.2ms|
+| One cast, diagnostic ROM excluding offscreen projectile lights only |53.42|43.80|50.2ms|
+| Six casts, diagnostic ROM excluding offscreen projectile lights only |45.79|40.81|50.2ms|
 
-큰 지속 비용은 움직이는 불빛의 160행 하드웨어 윈도 테이블 재생성입니다. 화면 밖 투사체까지 먼저 캐시 키를 변경한 뒤 빌더 안에서 제외하므로, 화면에서 사라진 이후에도 같은 영웅 조명 테이블을 반복 생성합니다. 화면 밖 구간을 같은 HW100–180으로 비교하면 39.82→58.99FPS입니다. 두 진단 ROM은 영웅 조명·마법 그림·마법 연산·음성을 유지했고 시전 수, 마나, 시뮬레이션 틱 수가 기준과 일치합니다.
+The main sustained cost is rebuilding the 160-row hardware window table for moving lights. Offscreen projectiles change the cache key before being rejected inside the builder, repeatedly regenerating the same hero lighting table after they leave the screen. Comparing the same offscreen interval, HW100-180, gives 39.82 to 58.99 FPS. Both diagnostic ROMs retain hero lighting, spell graphics, spell simulation and audio; cast counts, mana and simulation ticks match the baseline.
 
-시각적으로는 투사체 위치 보간이 없습니다. 약19.91Hz 게임 틱에서 이동한 좌표를 그대로 표시하여 이 장면에서는 가로8·세로4픽셀씩 뛰며, 실제 OAM 반영 간격도1–4 하드웨어 프레임으로 불규칙합니다. 렌더 FPS만 올려도 이 계단식 이동은 남습니다.
+Projectile positions have no visual interpolation. Coordinates from the approximately 19.91 Hz game tick are displayed directly, jumping 8 horizontal and 4 vertical pixels in this scene. Actual OAM update intervals are irregular, spanning 1-4 hardware frames. Increasing render FPS alone does not remove this stepped motion.
 
-시전 준비 자세도 오래 유지됩니다. 전사 준비 동작은 첫13틱을 그림0–2에 배분하여 첫 그림이352ms, 다음 그림이335ms 유지됩니다. 발사 전 렌더링은56.74FPS이므로 이 정지는 화면 전체 FPS와 다른 문제입니다.
+Casting wind-up poses also persist for a long time. The Warrior maps the first 13 ticks to frames 0-2, holding the first image for 352ms and the next for 335ms. Pre-release rendering averages 56.74 FPS, so these holds are distinct from overall rendering performance.
 
-효과음 제외 시 렌더 횟수·간격이 정확히 동일했습니다. 지형·깊이 캐시의 시작/종료 해시와 관찰한 dirty 슬롯도 동일했고 하드웨어 조명이 계속 켜져 있었습니다. 이 정지 장면에서 지형 전체 재합성이 주원인이라는 증거는 없습니다.
+Disabling sound effects leaves render counts and intervals exactly unchanged. Initial/final terrain and depth cache hashes and observed dirty slots also match, with hardware lighting continuously enabled. There is no evidence that full terrain recomposition is the main cause in this stationary scene.
 
-우선 개선 방향은 화면 밖/기존 조명 안에 완전히 포함된 투사체가 조명 캐시를 깨지 않게 하기, 움직이는 광원 테이블 생성 범위 축소, 게임 판정은 유지하며 투사체 표시 좌표만 보간하기입니다. 준비 동작은 원래 발사 시점과 별도로 프레임 배분을 검토할 수 있습니다. 투사체 조명을 끈 진단에서도 첫 발사50.2ms 지연1회가 남아, 최초 자세 처리의 잔여 비용은 별도 계측이 필요합니다.
+Priorities are to prevent offscreen or fully contained projectile lights from invalidating the lighting cache, reduce the table rows regenerated for moving lights, and interpolate display positions while preserving gameplay coordinates. Wind-up frame allocation can be reviewed independently of the original release timing. Even with projectile lights disabled, the first release retains one 50.2ms delay; its remaining cost requires separate measurement.
 
-제한: 실기 측정이 아닙니다. 전사·Firebolt 1레벨·L1 단독 장면입니다. 3초 관찰은 화면 밖 비행을 포함하며 발사체가 살아 있는 상태에서 끝납니다. 벽 충돌의3프레임 구간 FPS는 지속 성능으로 해석하지 않습니다. 진단 ROM은 출하 변경이 아니며 조명 회귀 검증도 완료하지 않았습니다.
+Limitations: these are not physical hardware measurements. The fixture is a solo Warrior with level-1 Firebolt on L1. The 3-second observation includes offscreen flight and ends while the projectile is still alive. FPS during the 3-frame wall-collision interval is not a sustained rate. Diagnostic ROMs are not shipping changes and have not completed lighting regression validation.
 '''
 (a.folder/'analysis.md').write_text(md)
 print(json.dumps({'result':'PASS','summary':str(a.folder/'summary.json'),'metrics':len(metrics),'controls':len(controls)},ensure_ascii=False))
