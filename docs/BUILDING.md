@@ -1,4 +1,4 @@
-# Building the source candidate
+# Building Diablo GBA
 
 ## Complete MPQ generation
 
@@ -38,14 +38,6 @@ python scripts/build_generated_variant.py --project /private/new-diablo-build/ga
 
 This installs `variants/flash-ez4.c` and the EZ4 frontend label without changing
 the Standard source. It also accepts `--variant standard`.
-
-## Converter source
-
-The converter source is included without config.h, executables or encrypted ROM
-payloads. It packages an already-built ROM; it is separate from MPQ asset generation.
-Its `build_release.py` accepts --zig, --rom, --mpq, --gog-mpq and --output.
-Do not commit generated payloads. Windows/macOS GUI and physical flash-cartridge
-checks are separate from Linux builds and emulator checks.
 
 ## Asset-free checks
 

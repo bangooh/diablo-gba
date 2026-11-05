@@ -27,16 +27,14 @@ an input to this pipeline.
 
 ### Validation scope
 
-The saved integration record covers complete generation from a Diablo 1.0 MPQ,
+Previous integration checks covered complete generation from a Diablo 1.0 MPQ,
 Standard and EZ4 ROM builds, and Standard-ROM checks in mGBA: creating a fresh
 hero, entering town and floor 1, saving 128KB, loading in a fresh run, and loading
-floors 5 and 16. Ending stills now come from the MPQ videos, so the ROM hash
-differs from the earlier release.
+floors 5 and 16.
 
 An independent unattended clean build, GOG MPQ generation, physical GBA/EZ4
-cartridge/link-cable tests and Windows/macOS GUI converter validation remain
-separate outstanding tasks. These records do not mean that complete generation
-and runtime validation were repeated during source packaging.
+cartridge/link-cable tests remain unverified. These integration tests were not
+rerun during repository cleanup.
 
 Asset-free checks:
 
@@ -46,10 +44,9 @@ python scripts/verify_reference_sources.py
 python scripts/test_core.py
 ```
 
-### Publication
+### License
 
-See the [GitHub upload guide](docs/GITHUB_UPLOAD.md) and
-[current status](docs/PUBLICATION_STATUS.md). This project is non-commercial
+This project is non-commercial
 and source-available; it is not presented as MIT-licensed or OSI-approved open
 source. License scope and existing notices are in LICENSE.md, NOTICE.md and
 docs/THIRD_PARTY.md. The source license grants no rights to game assets.
@@ -84,14 +81,12 @@ python scripts/regenerate_complete.py --mpq /private/DIABDAT.MPQ --output /priva
 
 ### 검증 범위
 
-저장된 통합 검증 기록에서 Diablo 1.0 MPQ 전체 생성과 일반용·EZ4 ROM 빌드,
+이전 통합 검증에서 Diablo 1.0 MPQ 전체 생성과 일반용·EZ4 ROM 빌드,
 일반용 mGBA 새 캐릭터 생성·마을·1층 진입·128KB 저장·새 실행 불러오기,
-5층·16층 로드를 확인했습니다. 엔딩 정지화면은 MPQ 영상에서 추출한 것으로
-변경되어 이전 배포 ROM과 해시가 다릅니다.
+5층·16층 로드를 확인했습니다.
 
-독립 환경에서의 무인 클린 빌드, GOG MPQ, 실기·EZ4 카트리지·링크 케이블,
-Windows/macOS GUI 컨버터 검증은 별도 남은 항목입니다.
-전체 생성 및 실행 검증을 이번 패키징 작업에서 새로 수행했다는 뜻은 아닙니다.
+독립 환경에서의 무인 클린 빌드, GOG MPQ, 실기·EZ4 카트리지·링크 케이블은
+아직 검증되지 않았습니다. 이번 저장소 정리에서 통합 검증을 다시 실행하지는 않았습니다.
 
 자산 없는 검사는 다음과 같습니다.
 
@@ -101,10 +96,8 @@ python scripts/verify_reference_sources.py
 python scripts/test_core.py
 ```
 
-### 공개 안내
+### 라이선스
 
-[GitHub 업로드 안내](docs/GITHUB_UPLOAD.md)와
-[현재 상태](docs/PUBLICATION_STATUS.md)를 참고하세요.
 프로젝트는 비상업적 source-available 형태이며 MIT 또는 OSI 오픈소스로
 표시하지 않습니다. 적용 범위와 기존 고지는 LICENSE.md, NOTICE.md,
 docs/THIRD_PARTY.md에 있습니다. 소스 라이선스는 게임 자산의 권리를

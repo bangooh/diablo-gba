@@ -6,8 +6,7 @@
 | DevilutionX | https://github.com/diasurgical/DevilutionX ; archived early controller reference dac104babfb6187415432f428ac2516747ffc154; unchanged archived SUL in LICENSES/DevilutionX-LICENSE.md; all retained DevilutionX references matched this revision; runtime adaptation scope still needs review |
 | source_assets C/C++ references | Recovered code references, not MPQ art; retain local LICENSE.md where recovered, otherwise the upstream license in LICENSES applies to identified upstream material. All 58 retained reference files now match pinned upstream bytes; see reference-code-allowlist.json. Historical provenance.json notes are retained unchanged. |
 | Zig/Clang/LLD | External build tools; not bundled |
-| Python, Pillow, numpy, mpyq, dclimplode, cryptography, ffmpeg | External conversion/build dependencies; not bundled; distribution of these packages requires their own notices |
-| OpenSSL and platform crypto libraries | Converter build dependencies; native binaries not included |
+| Python, Pillow, numpy, mpyq, dclimplode, ffmpeg | External conversion/build dependencies; not bundled; distribution of these packages requires their own notices |
 | mGBA | External optional runtime validation tool; not bundled |
 | team Mupung | Credit retained; no blanket assertion that code was imported from this team |
 

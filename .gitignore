@@ -35,4 +35,3 @@
 *.MIN
 *.TIL
 *.SOL
-converter/*/src/config.h
