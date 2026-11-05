@@ -1,0 +1,4 @@
+Pillow==13.0.0
+mpyq==0.2.5
+dclimplode==0.0.1.0
+numpy==2.3.5

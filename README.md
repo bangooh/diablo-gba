@@ -1,45 +1,9 @@
-# Diablo GBA — source distribution (0.9.5)
+# Diablo GBA 0.9.5 — source upload in progress
 
-A C-based GBA-specific engine developed with reference to Devilution and
-DevilutionX. Unofficial fan project by Bangoo; not affiliated with Blizzard
-Entertainment or Nintendo. Special thanks to DevilutionX and team Mupung.
+Unofficial fan project by Bangoo. C-based GBA engine referencing Devilution and DevilutionX.
 
-This source-available package includes the runtime, MPQ asset-generation
-scripts, and approved custom font inputs with their existing attribution.
-Game artwork, sound, music, videos, ROMs and save fixtures are not included.
-Repository: https://github.com/bangooh/diablo-gba
+This repository is currently an incomplete source snapshot. Required MPQ input maps, integrity manifests and provenance records are withheld pending upload review. Do not treat this checkout as a reproducible build or completed release.
 
-## Build and check
+No MPQ, game artwork, audio, videos, ROMs, saves or encrypted ROM payloads are included. Existing custom font inputs retain their attribution. Upstream licenses and modification notices remain included.
 
-See [build instructions](docs/BUILDING.md) and the
-[regeneration report](docs/REGENERATION.md). The complete generation entry point
-is `scripts/regenerate_complete.py`; a legally obtained `DIABDAT.MPQ` is required.
-The historical `game-source/build-recipe.py --graphics` is not the supported
-clean-generation entry point.
-
-Asset-free checks require Python 3.11+ and a native C compiler:
-
-```sh
-python scripts/check_public_tree.py
-python scripts/verify_reference_sources.py
-python scripts/test_core.py
-```
-
-## License and provenance
-
-The root [Sustainable Use License](LICENSE.md) governs this project's code
-contributions; upstream-derived material retains its upstream terms and notices.
-See [NOTICE](NOTICE.md), [third-party scope](docs/THIRD_PARTY.md), and
-[publication status](docs/PUBLICATION_STATUS.md). No game-asset rights are granted.
-This non-commercial license is not an OSI-approved open-source license.
-The checks are not legal clearance or proof of independent authorship for every line.
-
-## Verified scope
-
-The saved integration report records a complete Diablo 1.0 MPQ build and
-mGBA fresh-hero, dungeon, save and reload checks. This is not a claim of an
-independent unattended clean build. GOG MPQ generation and physical GBA/EZ4/link
-checks remain unverified. See [validation](docs/mpq-build-validation.json).
-
-For repository preparation and the exact files to upload, see
-[GitHub upload guide](docs/GITHUB_UPLOAD.md).
+The root Sustainable Use License is non-commercial source-available, not an OSI-approved open-source license. Special thanks to DevilutionX and team Mupung.
