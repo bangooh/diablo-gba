@@ -17,7 +17,7 @@ is `scripts/regenerate_complete.py`; a legally obtained `DIABDAT.MPQ` is require
 The historical `game-source/build-recipe.py --graphics` is not the supported
 clean-generation entry point.
 
-Asset-free checks require Python 3.11+ and a native C compiler:
+Asset-free checks require Python 3.12+ and a native C compiler:
 
 ```sh
 python scripts/check_public_tree.py
