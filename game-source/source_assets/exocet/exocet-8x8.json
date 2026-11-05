@@ -1,0 +1,25 @@
+{
+  "name": "Exocet-inspired GBA 8x8, pixel-hinted draft7",
+  "source": "Exocet Blizzard Medium, user supplied",
+  "cell": [
+    8,
+    8
+  ],
+  "ink": [
+    7,
+    7
+  ],
+  "ascii_range": [
+    32,
+    126
+  ],
+  "lowercase": "capital-style forms, same as uppercase",
+  "row_order": "top to bottom",
+  "bit_order": "MSB left",
+  "1bpp_bytes": 1024,
+  "gba_4bpp_bytes": 4096,
+  "gba_8bpp_bytes": 8192,
+  "antialiasing": false,
+  "O": "cross inside the bowl",
+  "1bpp_7row_bytes": 896
+}

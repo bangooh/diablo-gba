@@ -1,0 +1,12 @@
+[
+  {
+    "file": "floor_fast_seeds79.h",
+    "sha256": "841530ef258b817cb08dd3ae32a0e22581706e132055c37f4a676ce2bd2cb8c2",
+    "purpose": "Port-specific fixed seeds or HUD geometry, not MPQ artwork"
+  },
+  {
+    "file": "map_arrows.h",
+    "sha256": "f58fa71d5ec589bd313a14d782b1d043d9ab64bd40b3f37fb06c2dabed56a46a",
+    "purpose": "Port-specific fixed seeds or HUD geometry, not MPQ artwork"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "game-source/source_assets/exocet/exocet-8x8-1bpp.bin": {
+    "sha256": "5a1eb1538b50e2ea17d202a2e5e9f49020dc2000b622b84f6cc12ae5138d47d5",
+    "bytes": 1024,
+    "purpose": "User-approved existing custom font input; retain SOURCE-COPYRIGHT.txt, no blanket relicensing."
+  },
+  "game-source/source_assets/exocet/exocet-5x5-1bpp.bin": {
+    "sha256": "b081aa41926770458e92fcb2144d95897648419314623f714e5ae77e47c90161",
+    "bytes": 640,
+    "purpose": "User-approved existing custom font input; retain SOURCE-COPYRIGHT.txt, no blanket relicensing."
+  }
+}

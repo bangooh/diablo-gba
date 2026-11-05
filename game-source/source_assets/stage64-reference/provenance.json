@@ -1,0 +1,50 @@
+{
+  "repository": "https://github.com/diasurgical/devilution",
+  "commit": "9f01757243412bb154d02d9af65c804159e6e0ea",
+  "commit_date": "2025-09-15T02:01:35Z",
+  "purpose": "Stage64 original object placement and door automap audit",
+  "license": "See LICENSE.md copied unchanged at same commit",
+  "files": {
+    "themes.cpp": {
+      "url": "https://raw.githubusercontent.com/diasurgical/devilution/9f01757243412bb154d02d9af65c804159e6e0ea/Source/themes.cpp",
+      "bytes": 23580,
+      "sha256": "c706ab706e260e1d37f948d8d10d32fb99d9035f6bf2d0c1d5dc91611fa5f810"
+    },
+    "automap.cpp": {
+      "url": "https://raw.githubusercontent.com/diasurgical/devilution/9f01757243412bb154d02d9af65c804159e6e0ea/Source/automap.cpp",
+      "bytes": 21077,
+      "sha256": "1596fe7680fa8f36b5727a0472fde2bc738987ed4a76b434fa93e7388fde7cc3"
+    },
+    "LICENSE.md": {
+      "url": "https://raw.githubusercontent.com/diasurgical/devilution/9f01757243412bb154d02d9af65c804159e6e0ea/LICENSE.md",
+      "bytes": 3629,
+      "sha256": "049382c17367e384c622369abbeda0cab1d65658c28611717e18afead341e586"
+    }
+  },
+  "existing_local_sources": {
+    "source_assets/worldgen/objects.cpp": {
+      "sha256": "458f7f9b260940503c36b6efadfb88fe7b8771004322bf030bf237b417d73ae9",
+      "note": "Already present; commit identity not asserted"
+    },
+    "source_assets/worldgen/gendung.cpp": {
+      "sha256": "7b9aef18831937cdbfe2f2c70c3685eb1cb39e8c1994e541e165a049330f6223",
+      "note": "Already present; commit identity not asserted"
+    },
+    "source_assets/item_catalog/objdat.cpp": {
+      "sha256": "c62e6a277e7905873546e0ad584d277bf141b1add6910f07dcccb7d19b688819",
+      "note": "Already present; commit identity not asserted"
+    },
+    "source_assets/item_catalog/enums.h": {
+      "sha256": "35b581333fc8a1adaed4ed7c0519c8802fa2062592ccd1ad162701c58a856953",
+      "note": "Already present; commit identity not asserted"
+    },
+    "source_assets/worldgen/L1.SOL": {
+      "sha256": "036451d4ecca26b757bb3c65d85edb00015fdd372e52a09e0506753cf6a06c90",
+      "note": "Already present; commit identity not asserted"
+    },
+    "source_assets/worldgen/L2.SOL": {
+      "sha256": "765a21a7250888d3dbde418dc3411d064166037fc43d9751d4d8824ef826bc9d",
+      "note": "Already present; commit identity not asserted"
+    }
+  }
+}

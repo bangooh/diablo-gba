@@ -1,0 +1,47 @@
+[
+  {
+    "path": "game-source/source_assets/exocet/exocet-8x8.h",
+    "sha256": "a9e78e4b35381306e6fc1fdc54d2d713ecad8eb515eb45e376078d5e480bb804",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/exocet/exocet-5x5.h",
+    "sha256": "97bffae00cf027b7b31eec0f048db745ff5ee8f57c24a740ff936a8db5792e56",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/bg_stage41/water_transition.h",
+    "sha256": "877cb58d8a9a4af8180b93008358bb62d1c2c84d9f49fa344706876bcfda0141",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/bg_stage41/water_quest.h",
+    "sha256": "77c0a41d7bf423bb8449640b0a3d03bae88aa9f4250859fd1af91bbfc2f146d0",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/bg_stage41/prop_highlight.h",
+    "sha256": "e8005fdc3bfc84e343034bf03ed48b2f922b7a82258564c1801bdfb95cc452e4",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/monster_stage66/monster_death_baseline.h",
+    "sha256": "736970f77d9124a231e306491bd94694a2fc2ba1538525280d8614b0cf878566",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/monster_stage66/floor_decals_baseline.h",
+    "sha256": "d2eb56570d7a585bbf4dfc0de3faa1940630e49c434d537717aa785deb8dc248",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/monster_stage71/baseline-floor_decals.h",
+    "sha256": "64b8926bc5c954c1e9b5396fd8b56346a92031fe1f18b7ce7001f0c3ceed8160",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  },
+  {
+    "path": "game-source/source_assets/monster_catalog/monster-stat-widths.h",
+    "sha256": "1646c47272f9d86ea6ebbde32f96cc796cfd2d5eccdb84388f90989565ad88d0",
+    "reason": "generated font, palette, baseline or metadata header; provenance/data role not cleared for public inclusion"
+  }
+]

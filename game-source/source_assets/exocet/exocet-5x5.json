@@ -1,0 +1,21 @@
+{
+  "name": "Exocet-inspired 5x5 draft1",
+  "ink": [
+    5,
+    5
+  ],
+  "suggested_advance": 6,
+  "gba_cell": [
+    8,
+    8
+  ],
+  "ascii_range": [
+    32,
+    126
+  ],
+  "lowercase": "capital forms",
+  "row_bit_order": "MSB left",
+  "O": "cross inside bowl",
+  "compact_bytes": 640,
+  "antialiasing": false
+}
