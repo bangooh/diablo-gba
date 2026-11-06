@@ -9,6 +9,10 @@ scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
 
+## Video
+
+[Watch the Diablo GBA video on YouTube](https://youtu.be/I-gR6Kp92YA?si=mzzW67gmksj5jmxJ)
+
 ## Build and check
 
 See [build instructions](docs/BUILDING.md) and the
