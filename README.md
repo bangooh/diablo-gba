@@ -11,7 +11,9 @@ Repository: https://github.com/bangooh/diablo-gba
 
 ## Video
 
-[Watch the Diablo GBA video on YouTube](https://youtu.be/I-gR6Kp92YA?si=mzzW67gmksj5jmxJ)
+[![Watch the Diablo GBA video on YouTube](https://img.youtube.com/vi/I-gR6Kp92YA/hqdefault.jpg)](https://youtu.be/I-gR6Kp92YA?si=mzzW67gmksj5jmxJ)
+
+Click the thumbnail to watch on YouTube.
 
 ## Build and check
 
