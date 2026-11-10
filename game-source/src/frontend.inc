@@ -193,9 +193,8 @@ static UI_FN __attribute__((target("thumb"),minsize)) unsigned frontend_run(int 
     for(int dy=-2;dy<=2;dy++)for(int dx=-2;dx<=2;dx++)pixels[(y+dy)*240+x+dx]=colors[i];
    }
    front_text(126,link_state.role?"WAIT FOR HOST / B EXIT":"A START / B EXIT",253);
-   /* A timed-out host can start a local CPU party again. Clients must wait
-    * for the cable host or leave the lobby. */
-   front_info_text(143,(!link_state.role&&link_state.members==1)?"R: PLAY WITH CPU PARTY":"YOUR SAVED HERO WILL JOIN THE HOST'S WORLD.");
+   /* Offline CPU play must not depend on the serial master/slave pin. */
+   front_info_text(143,link_can_start_cpu(&link_state)?"R: PLAY WITH CPU PARTY":"YOUR SAVED HERO WILL JOIN THE HOST'S WORLD.");
    }
   }else if(mode==9){
    front_difficulty_screen(choice);
@@ -219,7 +218,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) unsigned frontend_run(int 
   unsigned held=(~R16(0x04000130))&1023,pressed=held&~prev;prev=held;
   if(mode==2){if((pressed&(KEY_A|KEY_B|KEY_START))||ticks>=420){frontend_mode=3;choice=0;ticks=0;}continue;}
   if(mode==8){
-   if(!link_state.role&&link_state.members==1&&(pressed&KEY_R)){link_close();link_state.role=0;link_state.members=1;coop_cpu_mask=14;front_connecting(&page);frontend_mode=0;return 100;}
+   if(link_can_start_cpu(&link_state)&&(pressed&KEY_R)){link_close();link_state.role=0;link_state.members=1;coop_cpu_mask=14;front_connecting(&page);frontend_mode=0;return 100;}
    if(!link_state.role&&link_state.connected&&!link_state.launch&&(pressed&(KEY_A|KEY_R))){link_state.cpu_mask=(pressed&KEY_R)?15u&~link_state.members:0;link_state.launch_acks=0;link_state.launch=1;}
    if((!link_state.role&&link_state.launch&&((link_state.launch_acks&link_state.members)==(link_state.members&~1u)))||link_state.game_ready){coop_cpu_mask=link_state.cpu_mask;link_state.active=0;front_connecting(&page);frontend_mode=0;return 100;}
    if(pressed&KEY_B){link_close();frontend_mode=3;choice=1;front_palette(asset_front_palette);}continue;}

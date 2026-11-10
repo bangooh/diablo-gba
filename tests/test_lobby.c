@@ -42,4 +42,13 @@ for(unsigned role=1;role<4;role++)for(unsigned launching=0;launching<2;launching
  link_reset(&h,0);h.members=1|(1u<<role);h.connected=1;
  packet(&h,&c,0);assert(c.connected&&c.members==h.members&&c.received[0]==1);cases++;
 }
+/* Offline availability is independent of hardware role. */
+for(unsigned role=0;role<4;role++){
+ LinkState s;link_reset(&s,role);assert(link_can_start_cpu(&s));
+ s.connected=1;assert(!link_can_start_cpu(&s));s.connected=0;
+ s.launch=1;assert(!link_can_start_cpu(&s));s.launch=0;
+ s.game_ready=1;assert(!link_can_start_cpu(&s));s.game_ready=0;
+ s.packets=1;s.members=15;assert(!link_can_start_cpu(&s));
+ s.members=1u<<role;assert(link_can_start_cpu(&s));cases++;
+}
 printf("PASS: %u roster departure/rejoin/launch scenarios across 2-4 player masks\n",cases);}

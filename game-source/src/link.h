@@ -11,6 +11,12 @@ typedef struct {
  unsigned members,launch,launch_acks,game_ready,cpu_mask;
  unsigned last_start;
 } LinkState;
+/* Serial role alone does not imply a peer exists (including emulators).
+ * Allow offline play before the first packet or after the roster times out. */
+static inline int link_can_start_cpu(const LinkState *s){
+ return s->role<4&&!s->connected&&!s->launch&&!s->game_ready&&
+        (!s->packets||s->members==(1u<<s->role));
+}
 void link_reset(LinkState *s,unsigned role);
 void link_receive(LinkState *s,unsigned peer,uint16_t word);
 void link_frame(LinkState *s,unsigned keys);
