@@ -93,6 +93,7 @@ static UI_FN void save_metadata(void){if(game.area)town_drops_capture(&game);sav
 /* Live goats retain9-bit HP and maxHP in the coordinate high bits.
  * Legal tile coordinates need only7 bits. Dead records keep signed16 HP.
  * Retail Hell multiplayer Gharbad is483 HP; the five-byte size is unchanged. */
+#include "floor_validate.inc"
 static UI_FN __attribute__((minsize)) int floor_capture(FloorState *dst,const Game *g){
  for(unsigned i=0;i<MAX_ENEMIES;i++){
   const Enemy *e=&g->enemies[i];unsigned maximum=game_monster_hp_archive(e->kind,e->max_hp);
@@ -145,7 +146,7 @@ static UI_FN __attribute__((minsize)) void floor_apply(Game *g,const FloorState 
  }
  for(unsigned i=0;i<sizeof(src->tail);i++)((uint8_t*)g)[FLOOR_END_OFFSET+i]=src->tail[i];
 }
-static UI_FN int floor_read(unsigned level,FloorState *out){return level>=1&&level<=SAVE_FLOORS&&flash_save_read_range(out,SAVE_BYTES,SAVE_VERSION,floor_offset(level),sizeof(*out));}
+static UI_FN int floor_read(unsigned level,FloorState *out){return level>=1&&level<=SAVE_FLOORS&&flash_save_read_range(out,SAVE_BYTES,SAVE_VERSION,floor_offset(level),sizeof(*out))&&floor_state_valid(out);}
 static UI_FN int save_metadata_valid(const SaveMeta *meta){
  const CharacterState *h=&meta->hero;const typeof(meta->location) *g=&meta->location;int limit=g->area?96:80;
  if(g->area>1||g->facing>7||g->x<0||g->y<0||g->x>=limit||g->y>=limit||h->hp<=0||h->mana<0||h->max_mana<0||h->mana>h->max_mana||h->gold<0||!game_belt_valid(h->belt,h->potions)||meta->gamma>=OPTIONS_GAMMA_LEVELS)return 0;

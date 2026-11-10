@@ -80,6 +80,7 @@ static __attribute__((minsize)) UI_FN void campaign_restore_binding(void){
  coop_active=c->old_active;coop_campaign_active=c->old_campaign;coop_turn=c->old_turn;dungeon_workspace=c->old_workspace;game_generation_apply(&c->old_generation);
 }
 static __attribute__((minsize)) UI_FN int campaign_floor_valid(const FloorState *f){
+ if(!floor_state_valid(f))return 0;
  for(unsigned i=0;i<MAX_ENEMIES;i++){
   const SavedEnemy *e=&f->enemies[i];unsigned position=e->position[0]|((unsigned)e->position[1]<<8),alive=position>>14;
   if((position&127)>=80||((position>>7)&127)>=80||e->kind>=MONSTER_TYPES||alive>2)return 0;

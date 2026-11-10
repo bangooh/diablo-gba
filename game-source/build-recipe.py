@@ -67,7 +67,7 @@ for p in inputs:
     fingerprint.update(str(p.relative_to(ROOT)).encode()+b'\0')
     fingerprint.update(hashlib.sha256(p.read_bytes()).digest())
 flags=['-target','arm-freestanding-eabi','-mcpu=arm7tdmi','-marm','-O2','-g',
-       '-ffreestanding','-fno-builtin','-fno-stack-protector',
+       '-ffreestanding','-fno-strict-aliasing','-fno-builtin','-fno-stack-protector',
        '-fno-unwind-tables','-fno-asynchronous-unwind-tables',
        '-Wall','-Wextra','-Werror','-Wno-unused-command-line-argument']
 flags.append('-DBUILD_INPUT_SHA256="'+fingerprint.hexdigest()+'"')
