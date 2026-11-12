@@ -47,7 +47,17 @@ def main():
             result = subprocess.run([sys.executable, *map(str, argv)], stdout=log, stderr=subprocess.STDOUT)
         steps.append(dict(name=name, returncode=result.returncode, seconds=round(time.monotonic()-start, 2)))
         print(name, 'PASS' if result.returncode == 0 else 'FAILED', flush=True)
-        return result.returncode == 0
+        if result.returncode:
+            report = dict(scope='Incomplete foundation', full_asset_regeneration_verified=False,
+                          mpq_bytes=args.mpq.stat().st_size, steps=steps, outputs=[])
+            (target / 'regeneration-report.json').write_text(json.dumps(report, indent=2) + '\n')
+            log_path = logs / (name + '.log')
+            print(f'First failing stage: {name}. Full log: {log_path}', file=sys.stderr)
+            print('\n'.join(log_path.read_text(errors='replace').splitlines()[-30:]), file=sys.stderr)
+            print('Fix this error, then use a NEW output directory (foundation cannot resume).',
+                  file=sys.stderr)
+            sys.exit(1)
+        return True
 
     def tool(name, *argv):
         return command(name, [game / 'tools' / (name + '.py'), *argv])

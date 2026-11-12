@@ -1,7 +1,8 @@
 """Asset-free lobby, save, floor-validation and codec regressions. Requires a C compiler."""
 from pathlib import Path
-import ast,os,subprocess,tempfile
+import ast,os,subprocess,tempfile,sys
 r=Path(__file__).resolve().parents[1]
+subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(r/'tests'), '-p', 'test_build_environment.py'], check=True)
 for f in r.rglob('*.py'):ast.parse(f.read_text(),filename=str(f))
 with tempfile.TemporaryDirectory() as d:
  exe=Path(d)/'test-lobby'

@@ -46,3 +46,5 @@ Previous integration checks covered a complete Diablo 1.0 MPQ build and
 mGBA fresh-hero, dungeon, save and reload checks. This is not a claim of an
 independent unattended clean build. GOG MPQ generation and physical GBA/EZ4/link
 checks remain unverified. See [validation summary](docs/VALIDATION.md).
+
+Windows users: see the [WSL setup and MPQ checksum guidance](docs/BUILDING.md#windows-setup-wsl2).

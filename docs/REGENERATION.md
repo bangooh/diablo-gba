@@ -19,7 +19,9 @@ against a separately supplied reference; that reference is not a generation inpu
 
 ## Resuming a build
 
-Use the original command with `--resume` after correcting an incomplete stage.
+After a successful foundation, use the original command with `--resume` to retry
+an incomplete extended stage. A failed foundation requires a new output directory;
+inspect the first failing log before retrying.
 Completed stages record arguments and dependency/context hashes. If a completed
 stage changes, start a new output directory rather than mixing outputs from
 different runs. Checkpoints preserve original background, audio, floor and
