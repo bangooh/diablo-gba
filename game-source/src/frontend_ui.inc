@@ -42,7 +42,7 @@ static UI_FN void front_focus(int y,int left,int right){
 static UI_FN void front_mark(int y){front_focus(y-1,43,187);}
 static UI_FN void front_main_screen(unsigned choice){
  const char *items[]={"SINGLE PLAYER","MULTI PLAYER","CREDITS","EXIT DIABLO"};
- front_tiny(5,151,"V 0.9.5",253);
+ front_tiny(5,151,"V 0.9.6",253);
  for(unsigned i=0;i<4;i++)front_text(76+i*16,items[i],i==choice?254:253);
  front_mark(76+choice*16);
 }

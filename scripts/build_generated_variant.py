@@ -27,9 +27,9 @@ for name in ('src', 'generated'):
 shutil.copy2(project / 'link.ld', staging / 'link.ld')
 shutil.copy2(ROOT / 'variants' / ('flash-' + a.variant + '.c'), staging / 'src/flash.c')
 f = staging / 'src/frontend_ui.inc'
-s = f.read_text().replace('V 0.9.5 EZ4"', 'V 0.9.5"')
+s = f.read_text().replace('V 0.9.6 EZ4"', 'V 0.9.6"')
 if a.variant == 'ez4':
-    s = s.replace('V 0.9.5"', 'V 0.9.5 EZ4"')
+    s = s.replace('V 0.9.6"', 'V 0.9.6 EZ4"')
 f.write_text(s)
 subprocess.run([sys.executable, str(ROOT / 'game-source/build.py'), '--zig', str(a.zig.resolve()),
                 '--source-root', str(staging), '--output', str(output)], check=True)

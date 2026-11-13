@@ -1506,7 +1506,9 @@ static void automap_blend(void){
     R16(0x04000052)=0x0a06; /* Retain the information-panel blend in this path. */
 }
 /* Map refresh is a cold upload; reserve fast RAM for the per-frame death path. */
-static inline int map_round(int n,int divisor){return n<0?-((-n+divisor/2)/divisor):(n+divisor/2)/divisor;}
+/* Keep an outlined copy with its ROM-resident automap callers; EZ4 needs the
+ * remaining IWRAM for its bank-switching routines. Still allow inlining. */
+static inline __attribute__((section(".text.ui"))) int map_round(int n,int divisor){return n<0?-((-n+divisor/2)/divisor):(n+divisor/2)/divisor;}
 /* Dungeon vertices have an exact two-pixel step: no alternating narrow cells.
  * Town retains the scale of its precomputed map bitmap. */
 static inline int map_vertex(int n){return game.area?map_round(n*16,9):n*2;}

@@ -16,7 +16,7 @@ static unsigned inventory_art_active;
 static uint16_t inventory_gold_amount;
 volatile unsigned inventory_art_uploads,inventory_commit_overruns;
 _Static_assert(17408+1280<=sizeof(load_buffer),"inventory scratch capacity");
-static int inventory_held(void){return game_item_drag_index(coop_active?coop_id:0);}
+static UI_FN int inventory_held(void){return game_item_drag_index(coop_active?coop_id:0);}
 static UI_FN void inventory_drag(unsigned code){if(coop_active)inventory_command=game_item_drag_wire(code);else inventory_notice=game_item_drag(&game,code);}
 static UI_FN __attribute__((target("thumb"),minsize)) const Inventory *inventory_view(void){return coop_active?&coop_players[coop_id].hero.inventory:&hero_inventory;}
 static UI_FN int inventory_selected(void){

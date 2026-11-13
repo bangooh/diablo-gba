@@ -45,7 +45,7 @@ static UI_FN void front_exit_notice(void){
  lz_decode(asset_front_palette,palette,sizeof(palette));
  front_draw_text(120,76,"PLEASE WAIT",254,palette);
 }
-static void front_text(int y,const char *text,unsigned color){front_text_at(120,y,text,color);}
+static UI_FN void front_text(int y,const char *text,unsigned color){front_text_at(120,y,text,color);}
 /* Exact bevel rule and palette indices from all 40 native 7x7 frontend
  * glyphs: exposed upper edge=2, body=10, lower edge=42, shadow=91. */
 static inline __attribute__((always_inline)) unsigned front_small_ink(unsigned above,unsigned below,unsigned bit){

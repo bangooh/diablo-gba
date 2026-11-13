@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile Diablo GBA 0.9.5 with the archived production build recipe.
+"""Compile Diablo GBA 0.9.6 with the archived production build recipe.
 
 Never runs asset packers or writes production src/, generated/, or build/.
 Unchanged generated inputs are read directly, and assets.s is emitted privately.
@@ -57,8 +57,15 @@ def main():
             shutil.copy2(opts.reuse_objects / obj.name, obj)
             return obj
         source_flags=flags
+        thumb=None
         if name in ('flash.c','dungeon_visual.c','world.c','shop.c','dungeon.c','worldgen/l2.c','worldgen/l3.c','worldgen/l4.c'):
-            replace={'arm-freestanding-eabi':'thumb-freestanding-eabi','-marm':'-mthumb','-O2':'-Oz'}
+            thumb='-Oz'
+        # ROM-resident simulation objects: one cartridge-bus access per Thumb
+        # opcode instead of two per ARM opcode. See build-recipe.py.
+        elif name in ('monster_ai.c','objects.c','spells.c','arrows.c','controller.c','items.c','progress.c','potions.c','exploration.c'):
+            thumb='-O2'
+        if thumb:
+            replace={'arm-freestanding-eabi':'thumb-freestanding-eabi','-marm':'-mthumb','-O2':thumb}
             source_flags=[replace.get(flag,flag) for flag in flags]
         command = [opts.zig, 'cc', *source_flags,
                    *(['-Wno-logical-op-parentheses', '-Wno-switch-bool']
@@ -66,6 +73,10 @@ def main():
                    '-c', str(source / 'src' / name), '-o', str(obj)]
         commands.append(command)
         subprocess.run(command, check=True, env=env)
+        if thumb:
+            code=obj.read_bytes()
+            # Zig 0.13 returns from these helpers with POP {pc}: no ARMv4T interworking.
+            assert b'__aeabi_uldivmod' not in code and b'__aeabi_ldivmod' not in code, name+': 64-bit division in a Thumb object'
         print('Compiled', name, flush=True)
         return obj
 

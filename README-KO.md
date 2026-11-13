@@ -1,4 +1,4 @@
-# Diablo GBA 0.9.5 source distribution — English / Korean
+# Diablo GBA 0.9.6 source distribution — English / Korean
 
 ## English
 
@@ -10,6 +10,11 @@ The package includes game code, MPQ conversion tools and existing attributed
 3×5, 5×5 and 7×7 font inputs. Game artwork, audio, videos, MPQs, ROMs and saves
 are not included. The 7×7 font is stored in 8×8 cells. Existing font attribution
 notices are preserved.
+
+### Version 0.9.6
+
+Thumb/O2 simulation optimization; existing offline CPU-party support retained.
+See [changes and validation](docs/RELEASE-0.9.6.md).
 
 ### Building
 
@@ -56,7 +61,7 @@ Public repository: https://github.com/bangooh/diablo-gba
 
 ## Korean / 한국어
 
-### Diablo GBA 0.9.5 소스 배포본
+### Diablo GBA 0.9.6 소스 배포본
 
 Bangoo의 비공식 팬 프로젝트입니다. Devilution과 DevilutionX를 참고한
 C 기반 GBA 전용 엔진이며 Blizzard 또는 Nintendo의 공식 제품이 아닙니다.
@@ -65,6 +70,12 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 게임 코드, MPQ 변환 도구, 출처가 표시된 기존 3×5·5×5·7×7 폰트 입력을
 포함합니다. 게임 이미지·음원·영상·MPQ·ROM·세이브는 포함하지 않습니다.
 7×7 폰트는 8×8 셀에 저장됩니다. 폰트의 기존 출처 고지는 유지합니다.
+
+### 버전 0.9.6
+
+시뮬레이션 코드의 Thumb/O2 최적화를 적용했습니다. 혼자 클라이언트로
+인식돼도 R로 CPU 파티를 시작하는 기존 수정은 유지합니다.
+측정 결과와 검증 범위는 [변경 기록](docs/RELEASE-0.9.6.md)을 참고하세요.
 
 ### 빌드
 

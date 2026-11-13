@@ -13,7 +13,8 @@ typedef struct {
 } LinkState;
 /* Serial role alone does not imply a peer exists (including emulators).
  * Allow offline play before the first packet or after the roster times out. */
-static inline int link_can_start_cpu(const LinkState *s){
+/* Lobby-only: keep the out-of-line copy out of the IWRAM catch-all. */
+__attribute__((section(".text.ui"))) static inline int link_can_start_cpu(const LinkState *s){
  return s->role<4&&!s->connected&&!s->launch&&!s->game_ready&&
         (!s->packets||s->members==(1u<<s->role));
 }

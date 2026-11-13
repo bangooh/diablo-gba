@@ -79,13 +79,26 @@ if args.graphics:flags.append('-DGRAPHICS_ASSETS')
 for name in sources:
     obj=build/(pathlib.Path(name).stem+'.o')
     # Generation/terrain construction and shop transactions are cold paths.
-    # Thumb size optimization frees ROM for native theme artwork; gameplay
-    # and frame rendering retain ARM/O2. Zig0.13 needs the Thumb target triple.
+    # Thumb size optimization frees ROM for native theme artwork. The hot
+    # IWRAM renderer retains ARM/O2. Zig0.13 needs the Thumb target triple.
     source_flags=flags
+    thumb=None
     if args.graphics and name in ('dungeon_visual.c','world.c','shop.c','dungeon.c','worldgen/l2.c','worldgen/l3.c','worldgen/l4.c'):
-        replace={'arm-freestanding-eabi':'thumb-freestanding-eabi','-marm':'-mthumb','-O2':'-Oz'}
+        thumb='-Oz'
+    # ROM-resident simulation code is fetched over the 16-bit cartridge bus, where
+    # a Thumb opcode costs one access and an ARM opcode two. These objects have no
+    # IWRAM sections, so Thumb/O2 reduces opcode-fetch width and code size. Zig 0.13's
+    # __aeabi_uldivmod/__aeabi_ldivmod return with POP {pc}, which cannot return to
+    # a Thumb caller on ARMv4T; reject any Thumb object that references them.
+    elif args.graphics and name in ('monster_ai.c','objects.c','spells.c','arrows.c','controller.c','items.c','progress.c','potions.c','exploration.c'):
+        thumb='-O2'
+    if thumb:
+        replace={'arm-freestanding-eabi':'thumb-freestanding-eabi','-marm':'-mthumb','-O2':thumb}
         source_flags=[replace.get(flag,flag) for flag in flags]
     subprocess.run([args.zig,'cc',*source_flags,*(['-Wno-logical-op-parentheses','-Wno-switch-bool'] if name.startswith('worldgen/') else []),'-c',str(ROOT/'src'/name),'-o',str(obj)],check=True)
+    if thumb:
+        code=obj.read_bytes()
+        assert b'__aeabi_uldivmod' not in code and b'__aeabi_ldivmod' not in code, name+': 64-bit division in a Thumb object'
     objects.append(str(obj))
 if args.graphics:
     from tools.asset_bundle import emit_assets, referenced_assets

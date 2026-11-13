@@ -3,7 +3,7 @@
 ## Asset-free checks
 
 The repository checks public file content, pinned reference hashes, required font
-inputs and 30 lobby departure, rejoin and launch regression cases.
+inputs and 34 lobby departure, rejoin and launch regression cases.
 Save tests exercise all three distributed flash implementations with interruption
 budgets for initial and replacement commits, corrupt-newest-bank fallback, range
 checks and maximum-size archives. They model faults between operations, not
@@ -27,6 +27,8 @@ compatibility. Windows/macOS host generation has not been tested.
 
 The save-hardening changes add `-fno-strict-aliasing` and validate archived
 coordinates and indices before single-player or cooperative floor application.
-They preserve the archive layout/version. ROM recompilation, memory budgets and
-hardware save/load behavior still require integration verification; host tests
-do not establish those results. Rebuild all objects after the compiler flag change.
+They preserve the archive layout/version. Fresh Standard/EZ4 ROM recompilation
+and static memory budgets were verified for [0.9.6](RELEASE-0.9.6.md), using
+existing generated assets. Hardware save/load behavior remains unverified;
+host tests do not establish those results. Rebuild all objects after the compiler
+flag change.

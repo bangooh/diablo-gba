@@ -81,7 +81,8 @@ __attribute__((section(".text.ui"),target("thumb"),minsize)) void game_shortcut_
 /* The full population persists, but only8 nearby monsters can be active.
  * Dormant records neither collide nor attack: never create invisible attackers
  * when a player brings more monsters than the hardware sprite cache can show. */
-void __attribute__((section(".text.ui"),noinline)) game_activate_nearby(Game *g){
+/* Runs every tick from ROM over all 112 actors: Thumb halves its opcode fetches. */
+void __attribute__((section(".text.ui"),noinline,target("thumb"))) game_activate_nearby(Game *g){
     coop_enemy_invalidate();
     /* A max heap keeps the worst selected candidate at the root. Packing the
      * stable actor index after the distance preserves the original lowest-ID

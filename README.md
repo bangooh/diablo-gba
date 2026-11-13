@@ -1,4 +1,4 @@
-# Diablo GBA — source distribution (0.9.5)
+# Diablo GBA — source distribution (0.9.6)
 
 A C-based GBA-specific engine developed with reference to Devilution and
 DevilutionX. Unofficial fan project by Bangoo; not affiliated with Blizzard
@@ -8,6 +8,14 @@ This source-available package includes the runtime, MPQ asset-generation
 scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
+
+## Version 0.9.6
+
+ROM-resident simulation modules now use Thumb/O2. Matched mGBA tests show
+higher rendering FPS in the measured scenes; physical GBA performance and
+link-cable behavior still need testing. Offline CPU parties remain available
+even when the serial port identifies the console as a client.
+See [changes and validation](docs/RELEASE-0.9.6.md).
 
 ## Video
 
