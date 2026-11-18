@@ -33,3 +33,9 @@ Patch-0007 check builds recorded zero out-of-VBlank commit endings and zero mism
 The patches 0001–0010 build uses 24,416/24,576 bytes of IWRAM for code plus cache and 262,084/262,144 bytes of static EWRAM. The project maintainer reports completed physical-hardware and link-play validation. The automated checks described above were performed separately in mGBA and host tests. Final peak stack usage and exhaustive long-session coverage were not measured in this automated review. This release does not claim a new fix for SuperCard persistence or DS emulator save errors.
 
 No game assets, generated assets, ROMs, MPQ files or save fixtures are included in the public repository. Build assets locally from your own supported DIABDAT.MPQ.
+
+## Death-screen belt correction
+
+Move the retained potion belt to Y=152 when the death menu hides the information panel. Keep both shadow OAM and displayed OAM synchronized, and keep the belt at the bottom during subsequent dead-player redraws. Living-player positioning still follows information-panel visibility.
+
+Targeted mGBA checks reproduced the old Y=136 position and verified Y=152 in the death menu, death options and subsequent HUD redraws, plus normal positioning after revival. The Standard ROM build passed header and memory-budget checks. This correction has not yet been separately verified on physical hardware.

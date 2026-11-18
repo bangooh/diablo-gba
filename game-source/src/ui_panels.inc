@@ -113,6 +113,9 @@ static UI_FN __attribute__((target("thumb"),minsize)) void death_menu_draw(void)
  for(unsigned i=0;i<32;i++)R16(0x0600a000+i*2)=0;
  for(unsigned i=0;i<used;i++)dma(tiles+i*64,(void*)(0x06008000+death_text_tile(i)*64),64);
  dma(map,(void*)hud_map,1280);
+ /* The death overlay hides the information panel. Move the retained belt
+  * to the bottom in both the shadow OAM and the currently displayed OAM. */
+ for(unsigned i=4;i<14;i++){oam[i*4]=(uint16_t)((oam[i*4]&~255u)|152u);R16(0x07000000+i*8)=oam[i*4];}
  /* Hide minimap arrows and information backdrops, retain belt/world actors. */
  for(unsigned i=0;i<42;i++)if(i<4||i>=14)R16(0x07000000+i*8)=0x0200;
  R16(0x07000000+126*8)=R16(0x07000000+127*8)=0x0200;

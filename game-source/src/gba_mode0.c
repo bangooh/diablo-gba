@@ -1503,7 +1503,7 @@ THUMB_FN static UI_FN void vital_bars(void){
         dma(belt_marker,(void*)(0x06010000+864*32),32);
     }
     last_hp=game.hp;last_mana=game.mana;last_max_mana=game.max_mana;last_belt=game.belt;
-    for(int n=0;n<10;n++){int i=n+4;oam[i*4]=(uint16_t)(info_count?150-info_count*(hud_transparent?INFO_STEP:8):152);oam[i*4+1]=(uint16_t)(80+n*8);oam[i*4+2]=(uint16_t)(((n==9?BELT_RIGHT_TILE:BELT_TILE)+game_belt_code(game_belt_kind(&game,n)))|(5<<12));}
+    for(int n=0;n<10;n++){int i=n+4;oam[i*4]=(uint16_t)(game.hp>0&&info_count?150-info_count*(hud_transparent?INFO_STEP:8):152);oam[i*4+1]=(uint16_t)(80+n*8);oam[i*4+2]=(uint16_t)(((n==9?BELT_RIGHT_TILE:BELT_TILE)+game_belt_code(game_belt_kind(&game,n)))|(5<<12));}
 }
 /* Keep the HUD calls together in ROM; draw() has a tight IWRAM budget. */
 static UI_FN void gameplay_hud(void){hud();vital_bars();info_box_oam();durability_hud();}
