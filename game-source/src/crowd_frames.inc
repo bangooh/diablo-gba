@@ -1,7 +1,7 @@
 /* The rectangle can overlap a wall only in transparent padding. Test the
  * final source pixels using the same production occlusion predicate before
  * accepting such a share. Never modify the source VRAM or its cached image. */
-static UI_FN unsigned crowd_image_clear_pixels(unsigned slot,int wx,int wy,int foot){
+THUMB_FN static UI_FN unsigned crowd_image_clear_pixels(unsigned slot,int wx,int wy,int foot){
  if(actor_clear_geometry(wx,wy,foot))return 1;
  const volatile uint32_t *source=(const volatile uint32_t*)(0x06010000+slot*2048);
  /* Living images are staged until the next VBlank. Inspect the pending
@@ -43,7 +43,7 @@ static UI_FN unsigned crowd_image_clear(unsigned slot,int wx,int wy,int foot){
 #ifndef CROWD_IMAGE_CLEAR
 #define CROWD_IMAGE_CLEAR(slot,wx,wy,foot) crowd_image_clear(slot,wx,wy,foot)
 #endif
-static UI_FN int crowd_actor_frame(int *next,const uint8_t *base,int dir,int frame,int count,int wx,int wy,int foot,unsigned *bank,int monster){
+THUMB_FN static UI_FN int crowd_actor_frame(int *next,const uint8_t *base,int dir,int frame,int count,int wx,int wy,int foot,unsigned *bank,int monster){
  if(monster&&!game.area){
   unsigned band=lighting_at(wx+32,foot-16);
   if(infravision_frame)band=actor_infra_tint?2:0;

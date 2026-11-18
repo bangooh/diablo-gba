@@ -20,7 +20,7 @@ static inline void town_item_forget(unsigned i){
  if(old->x!=RING_INVALID){town_item_invalidate(old);old->x=RING_INVALID;}
 }
 _Static_assert(12288+GROUND_ITEM_BYTES<=sizeof(load_buffer),"town item scratch capacity");
-static UI_FN unsigned town_items_prepare(TownItemDraw list[TOWN_DROPS+5]){
+THUMB_FN static UI_FN unsigned town_items_prepare(TownItemDraw list[TOWN_DROPS+5]){
  unsigned n=0;
  highlighted_drop=game_item_target(&game);
  for(unsigned i=0;i<MAX_DROPS+5;i++){

@@ -19,7 +19,7 @@ QUEST_FN void game_quest_npc_spawn(Game *g){
  int x,y;if(!quest_place(g,0x47484152u+q,1,&x,&y)&&!quest_place(g,0x47484152u+q,0,&x,&y))return;
  unsigned kind=q==2?MONSTER_GHARBAD:MONSTER_ZHAR;g->enemies[MAX_ENEMIES-2]=(Enemy){x,y,game_monster_hp(kind,campaign_seed),1,kind,0};
 }
-QUEST_FN void game_quest_npc_step(Game *g){
+THUMB_FN QUEST_FN void game_quest_npc_step(Game *g){
  if(!game_campaign_layout()||g->area)return;
  if(dungeon_level==13&&quest_progress.stage[11]==1){for(unsigned i=0;i<MAX_ENEMIES;i++)if(g->enemies[i].kind==MONSTER_WARLORD&&npc_party_visible(g,i)){quest_progress.stage[11]=2;g->town_message=41;game_boss_intro(BOSS_INTRO_WARLORD);break;}}
  for(unsigned i=0;i<MAX_ENEMIES;i++){

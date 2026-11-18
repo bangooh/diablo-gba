@@ -18,7 +18,7 @@ static UI_FN void actor_palette_refresh(void){
   for(unsigned i=1;i<16;i++)R16(0x05000200+b*32+i*2)=R16(0x05000200+source*32+light_obj[source*16+i]*2);
  }
 }
-static UI_FN void actor_palette_plan(void){
+THUMB_FN static UI_FN void actor_palette_plan(void){
  unsigned reserved=(1u<<3)|(1u<<5)|(1u<<15),dark=0;
  actor_palette_hw_actors=actor_palette_cpu_actors=0;
  if(coop_active||game.area||(DEATH_SPRITES&&DEATH_SPRITE_STATE->count)){
@@ -29,10 +29,11 @@ static UI_FN void actor_palette_plan(void){
  if(coop_active)reserved|=(1u<<0)|(1u<<4)|(1u<<6);
  unsigned infravision=infravision_frame;
  int target=game.attack_wait?game.swing_target:game.target;
- for(unsigned i=0;i<=MAX_ENEMIES;i++){
-  if(i&&(!game.enemies[i-1].alive||game_enemy_hidden(&game,i-1)))continue;
-  const Motion *m=&motion[i];int x=(m->x>>8)-cam_x,y=(m->y>>8)-cam_y;
-  if(x<-32||x>272||y<0||y>208)continue;
+ for(unsigned n=0;n<visible_actor_count;n++){
+  unsigned i=visible_actors[n]; /* on-screen motions in ascending order */
+  if(i&&!game.enemies[i-1].alive)continue;
+  const Motion *m=&motion[i];
+  if(i&&game_enemy_hidden(&game,i-1))continue; /* pure; on-screen only */
   unsigned bank=i?monster_palette_bank(game.enemies[i-1].kind,!coop_active&&(int)i-1==target):hero_palette_bank(hero_render_variants[coop_active?coop_id:0]==27?3:game_hero_class());
   reserved|=1u<<bank;
   if(!(i&&infravision)&&lighting_at(m->x>>8,(m->y>>8)-16))dark|=1u<<bank;
@@ -48,7 +49,7 @@ static UI_FN void actor_palette_plan(void){
 }
 /* Return the OAM bank and only the residual software band. Raw tile caches
  * then survive transitions between bright and hardware-dark actor palettes. */
-static UI_FN unsigned actor_palette_resolve(unsigned bank,unsigned *band){
+THUMB_FN static UI_FN unsigned actor_palette_resolve(unsigned bank,unsigned *band){
  if(*band){
   unsigned display=actor_palette_state_bank(&actor_palettes,bank);
   if(display!=bank){*band=0;actor_palette_hw_actors++;return display;}

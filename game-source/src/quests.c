@@ -1,3 +1,4 @@
+#define THUMB_FN __attribute__((target("thumb")))
 #include "game.h"
 #include "audio.h"
 #include "coop.h"

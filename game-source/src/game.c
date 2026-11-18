@@ -209,7 +209,9 @@ void __attribute__((section(".text.ui"),target("thumb"),minsize)) game_damage_en
 /* Collect adjacent gold while approaching it. A stationary manual gold drop
  * stays on the ground until the hero moves again. Both diagonal corridors
  * must be open, so pickup never reaches through a wall or a closed door. */
-static __attribute__((noinline)) void game_auto_gold(Game *g){
+/* <0.25% of time in every measured scene: ROM, leaving IWRAM for the
+ * co-op item-effect cache. */
+static __attribute__((noinline,section(".text.ui"),target("thumb"))) void game_auto_gold(Game *g){
  if(coop_active&&(coop_cpu_mask&(1u<<coop_turn)))return;
  for(int i=0;i<MAX_DROPS;i++){
   Drop *d=&g->drops[i];if(!d->active||d->kind!=ITEM_GOLD)continue;
@@ -225,7 +227,9 @@ static __attribute__((noinline)) void game_auto_gold(Game *g){
 #ifdef GRAPHICS_ASSETS
 #include "region_input.inc"
 #endif
-void game_step(Game *g,unsigned held,unsigned pressed) {
+/* Dispatcher only: its callees live in ROM, and it accounts for <0.05% of
+ * sampled time, so keep its 1KB out of IWRAM. */
+__attribute__((section(".text.ui"))) void game_step(Game *g,unsigned held,unsigned pressed) {
     if(pressed&KEY_START) { game_init(g);
 #ifdef GRAPHICS_ASSETS
         game_enter_town(g,1);

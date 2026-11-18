@@ -5,7 +5,7 @@ static char info_lines[5][23];
 /* Reuses the former, unread info_gold word: first N rows are the item name. */
 static unsigned info_count,info_name_style;
 static UI_FN void info_reset(void){info_count=info_name_style=0;for(unsigned i=0;i<5;i++)info_lines[i][0]=0;}
-static UI_FN void info_add(const char *text){
+THUMB_FN static UI_FN void info_add(const char *text){
     while(*text&&info_count<5){
         unsigned n=0,last=0;while(text[n]&&n<22){if(text[n]==' ')last=n;n++;}
         if(text[n]&&last)n=last;

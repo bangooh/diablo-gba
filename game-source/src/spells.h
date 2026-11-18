@@ -43,7 +43,7 @@ typedef struct {uint16_t ticks,power;uint8_t spell,level,owner,count;} SpellCast
 typedef struct {int16_t x,y,vx,vy;int8_t last_x,last_y;uint8_t cast;int8_t target;} SpellBolt;
 extern SpellCast game_spell_casts[MAX_SPELL_CASTS];
 extern SpellBolt game_spell_bolts[MAX_SPELL_BOLTS];
-static inline int game_spell_bolts_active(void){for(unsigned i=0;i<MAX_SPELL_CASTS;i++)if(game_spell_casts[i].count)return 1;return 0;}
+__attribute__((section(".text.ui"))) static inline int game_spell_bolts_active(void){for(unsigned i=0;i<MAX_SPELL_CASTS;i++)if(game_spell_casts[i].count)return 1;return 0;}
 unsigned game_spell_bolt_world(unsigned index,unsigned phase,int *wx,int *wy);
 
 enum { SPELL_EFFECT_VIEWS=16+4*16+4 };

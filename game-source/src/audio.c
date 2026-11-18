@@ -1,3 +1,4 @@
+#define THUMB_FN __attribute__((target("thumb")))
 #include "audio.h"
 #include "coop.h"
 #include "item_effect_cache.h"
@@ -25,6 +26,7 @@
 #include "../generated/audio_6k.h"
 #include "../generated/hero_death_audio.h"
 #include "../generated/item_grab_audio.h"
+#include "../generated/ui_audio.h"
 #include "../generated/music_regions_packed.h"
 #ifndef R16
 #define R16(a) (*(volatile uint16_t *)(a))
@@ -48,12 +50,12 @@ static const Sample ending_music[]={
  {asset_audio_ending_common,ENDING_AUDIO_COMMON_OUTPUT_SAMPLES}
 };
 static volatile struct {int16_t predictor;uint8_t index,cow_reply;} ending_decoder;
-static const Sample effects[]={AUDIO_EFFECT_SAMPLES,HERO_DEATH_AUDIO_SAMPLES,ITEM_GRAB_AUDIO_SAMPLE};
-enum { ITEM_GRAB_EFFECT=AUDIO_EFFECT_COUNT+3 };
+static const Sample effects[]={AUDIO_EFFECT_SAMPLES,HERO_DEATH_AUDIO_SAMPLES,ITEM_GRAB_AUDIO_SAMPLE,UI_AUDIO_SAMPLES};
+enum { ITEM_GRAB_EFFECT=AUDIO_EFFECT_COUNT+3, UI_EFFECT_BASE=AUDIO_EFFECT_COUNT+4 };
 enum { BOSS_INTRO_EFFECT_BASE=47+MONSTER_AUDIO_COUNT+ITEM_AUDIO_EXTRA_COUNT+HAZARD_AUDIO_COUNT,
        HERO_ERROR_EFFECT_BASE=BOSS_INTRO_EFFECT_BASE+BOSS_INTRO_AUDIO_COUNT,
        FOUNTAIN_EFFECT=HERO_ERROR_EFFECT_BASE+HERO_ERROR_AUDIO_COUNT };
-_Static_assert(FOUNTAIN_EFFECT==175&&sizeof(effects)/sizeof(effects[0])==AUDIO_EFFECT_COUNT+4,"stable original IDs; new effects append");
+_Static_assert(FOUNTAIN_EFFECT==175&&sizeof(effects)/sizeof(effects[0])==AUDIO_EFFECT_COUNT+6,"stable original IDs; new effects append");
 _Static_assert(BOSS_INTRO_AUDIO_COUNT==BOSS_INTRO_COUNT,"boss gameplay and audio IDs must agree");
 unsigned audio_music_enabled=1,audio_effects_enabled=1;
 unsigned audio_music_volume=AUDIO_MUSIC_VOLUME_DEFAULT;
@@ -64,10 +66,12 @@ static unsigned track_id,music_started,effect_priority;
  * DMA1 in valid memory while its block-boundary IRQ is delayed by DMA3.
  * Timer3 supplies one IRQ per256 samples (about24Hz), not one IRQ per FIFO burst.
  * Only256 samples are scaled each time. No new timer or effect mixer buffer. */
-static union {int8_t music[768];ItemEffectCache cache[4];} audio_workspace __attribute__((aligned(4)));
-_Static_assert(sizeof(ItemEffectCache)*4<=768,"co-op caches fit inactive music buffer");
-#define music_buffer audio_workspace.music
-ItemEffectCache *audio_item_cache(void){return audio_workspace.cache;}
+static int8_t music_buffer[768] __attribute__((aligned(4)));
+/* Co-op's exact item-effect cache (720 bytes) lives in IWRAM after the code,
+ * so it no longer borrows music_buffer and music plays in co-op as in single
+ * player. NOLOAD: validity is tracked by effect_cache_valid (zeroed .bss). */
+static ItemEffectCache item_cache[4] __attribute__((section(".iwram_bss"),aligned(4)));
+ItemEffectCache *audio_item_cache(void){return item_cache;}
 static unsigned music_next;
 static volatile unsigned effect_started,effect_length;
 static volatile unsigned effect_id,item_id,item_started,item_length,mixed_until;
@@ -91,7 +95,7 @@ static unsigned sound_control(unsigned value){
  /* Direct Sound A gains only support50/100%. Use100% and PCM gain15.6..100%;
   * the default78% is20% above Stage46's65%. FIFO B retains its hardware gain.
   * Muting only changes A routing, so toggles never desynchronise its DMA. */
- return (value|4)&(audio_music_enabled&&audio_music_volume&&!coop_active?~0u:~0x300u);
+ return (value|4)&(audio_music_enabled&&audio_music_volume?~0u:~0x300u);
 }
 static __attribute__((section(".iwram.coop"),noinline)) unsigned clock_samples(void){
  unsigned ime=R16(0x04000208),hi,lo,pending;R16(0x04000208)=0;
@@ -182,7 +186,7 @@ static void music_fill(int8_t *dest){
  }
  music_next=position;
 }
-static __attribute__((noinline)) void music_feed(void){
+THUMB_FN static __attribute__((noinline)) void music_feed(void){
  /* FIFO keeps a4-byte output latch separate from its32-byte ring. With
   * empty startup, sample0 is latched at tick2; refill bursts start at3,19,
   *35,... . Thus source256+16 (not+32) is next at tick256. Preserve the
@@ -216,7 +220,7 @@ static __attribute__((noinline)) void music_feed(void){
  * Timer2/3 retain a uint32 sample clock, including wrap. Timer3 now reloads
  * every256 samples; IRQs must not be masked for12ms during playback. */
 #include "audio_gold.inc"
-static void effects_feed(unsigned now){
+THUMB_FN static void effects_feed(unsigned now){
  if(speech_length&&now-speech_started>=speech_length)speech_length=0;
  if(effect_length&&now-effect_started>=effect_length)effect_length=0;
  if(item_length&&now-item_started>=item_length)item_length=0;
@@ -313,7 +317,7 @@ __attribute__((section(".iwram.coop"),noinline)) void audio_vblank_irq(void){
  if(active&&(pending&33))effects_feed(clock_samples());
  /* Refill mixed SFX first: its FIFO then has nearly32 samples of headroom
   * while256 BGM samples are mapped into the retired DMA block. */
- if(active&&(pending&64)&&!coop_active)music_feed();
+ if(active&&(pending&64))music_feed();
  R16(0x03007ff8)|=(uint16_t)pending;
 }
 void audio_stop(void){
@@ -339,7 +343,7 @@ static void audio_begin(unsigned track){
  track_id=track;ending_decoder.predictor=0;ending_decoder.index=0;
  R16(0x04000084)=0x80;R16(0x04000080)=0;R16(0x04000082)=sound_control(0xff08);
  sample_epoch=0;R16(0x04000108)=0xfff0;R16(0x0400010c)=0xfff0;R16(0x0400010e)=0xc4;R16(0x0400010a)=0xc4;
- R16(0x04000104)=AUDIO_TIMER_RELOAD;active=1;item_effect_cache_reset();if(!coop_active)music_play();R16(0x04000106)=0x80;R16(0x04000208)=1;
+ R16(0x04000104)=AUDIO_TIMER_RELOAD;active=1;item_effect_cache_reset();music_play();R16(0x04000106)=0x80;R16(0x04000208)=1;
 }
 void audio_start(unsigned track){audio_begin(track<AUDIO_MUSIC_TRACKS?track:0);}
 void audio_ending_start(unsigned track){audio_begin(AUDIO_MUSIC_TRACKS+(track?1:0));}
@@ -384,6 +388,9 @@ void audio_effect(unsigned id,unsigned priority){
  audio_update();if(effect_length&&priority<effect_priority)return;
  if(coop_active&&item_length){if(priority<6)return;unsigned ime=R16(0x04000208);R16(0x04000208)=0;item_length=0;gold_clock_stop();R16(0x04000208)=(uint16_t)ime;}
  effect_play(id,priority);
+}
+void audio_ui(unsigned cue){
+ if(cue<=AUDIO_UI_SELECT)audio_effect(UI_EFFECT_BASE+cue,4);
 }
 void audio_queue_item(unsigned kind,unsigned pickup){
  if(!active||!audio_effects_enabled||speech_length||kind>ITEM_SOUND_GRAB||pickup>1)return;

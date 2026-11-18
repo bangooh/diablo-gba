@@ -69,7 +69,7 @@ static inline __attribute__((always_inline)) void info_raster_pixel(InfoRaster *
 static inline __attribute__((always_inline)) unsigned info_glyph_width(unsigned ch,unsigned *left){
  if(ch>=128)ch='?';unsigned metric=info_font_metrics[ch];*left=metric&7;return metric>>3;
 }
-static UI_FN void info_raster_prepare(const char lines[5][23],unsigned count,unsigned style){
+THUMB_FN static UI_FN void info_raster_prepare(const char lines[5][23],unsigned count,unsigned style){
  /* Compare only visible bytes: info_reset deliberately leaves string tails. */
  unsigned same=(info_stream_state&1)&&info_cache.count==count&&info_cache.style==style;
  for(unsigned row=0;same&&row<count;row++)for(unsigned c=0;c<23;c++){

@@ -2,6 +2,9 @@
  * acknowledged before simulation; region I/O occurs only after an actor tick. */
 #include "coop_campaign.h"
 static unsigned coop_render_frame,coop_failed,coop_clock_valid,coop_clock_remainder;
+/* Presentation clock: Motion/animation advance per elapsed 60 Hz video frame,
+ * as in single player, instead of three steps at once per 20 Hz tick. */
+static unsigned coop_video_valid,coop_video_remainder;static uint16_t coop_video_clock;
 static uint16_t coop_clock;
 static UI_FN int coop_roster_check(unsigned mask);
 #include "coop_commands.inc"
@@ -106,10 +109,10 @@ static UI_FN void coop_depart(unsigned leaving){
  link_diag_stage(LD_RUNNING);coop_clock_valid=coop_clock_remainder=0;
 }
 static UI_FN __attribute__((minsize)) void coop_enter(void){
- /* The BGM buffer becomes the exact equipment cache during this session. */
+ /* Restart audio for the co-op session; the scene load starts its music. */
  audio_stop();
  link_diag_start(link_state.role,link_state.members);link_diag_stage(LD_SAVE);
- coop_id=link_state.role;coop_members=link_state.members|coop_cpu_mask;coop_failed=0;coop_render_frame=0;coop_clock_valid=0;coop_clock_remainder=0;
+ coop_id=link_state.role;coop_members=link_state.members|coop_cpu_mask;coop_failed=0;coop_render_frame=0;coop_clock_valid=0;coop_clock_remainder=0;coop_video_valid=0;
  uint32_t previous_history[MONSTER_HISTORY_TYPES];for(unsigned i=0;i<MONSTER_HISTORY_TYPES;i++)previous_history[i]=monster_history[i];
  CharacterState local;
  if(save_read()){local=save_buffer.hero;for(unsigned i=0;i<MONSTER_HISTORY_TYPES;i++)monster_history[i]=saved_history(i);}
@@ -190,6 +193,7 @@ static UI_FN void coop_run_frame(unsigned held,unsigned pressed){
  if(modal){
   quick_mode=0;quick_blocked&=held;quick_blocked|=held;
   if(game.hp>0&&menu_mode==1){
+   menu_input_sound(pressed);
    if(pressed&(KEY_UP|KEY_DOWN))menu_choice^=1;
    if(pressed&(KEY_B|KEY_START))menu_close();
    else if(pressed&KEY_A){
@@ -198,6 +202,7 @@ static UI_FN void coop_run_frame(unsigned held,unsigned pressed){
    }
   }else if(game.hp<=0&&menu_mode==1){
    if(!coop_control_command){
+    menu_input_sound(pressed&~(KEY_B|KEY_START|KEY_R));
     if(pressed&KEY_UP)menu_choice=menu_choice<=1?3:menu_choice-1;
     if(pressed&KEY_DOWN)menu_choice=menu_choice>=3?1:menu_choice+1;
     if(pressed&KEY_A){
@@ -317,10 +322,20 @@ static UI_FN void coop_run_frame(unsigned held,unsigned pressed){
  move_to(&motion[0],game.x,game.y,ox,oy,WALK_TICKS*3);motion[0].dir=game.facing;
  for(unsigned i=0;i<4;i++){move_to(&coop_motion[i],coop_players[i].x,coop_players[i].y,px[i],py[i],WALK_TICKS*3);coop_motion[i].dir=coop_players[i].facing;}
  for(unsigned i=0;i<MAX_ENEMIES;i++)if(game.enemies[i].alive==1)move_to(&motion[i+1],game.enemies[i].x,game.enemies[i].y,ex[i],ey[i],game_enemy_walk_ticks(&game,(int)i)*3);
- for(unsigned tick=0;tick<3*steps;tick++){
+ /* Motion and coop_render_frame are presentation only (no checksum, no wire
+  * traffic), so each peer may interpolate on its own video clock. A sim tick
+  * still sets the targets above; capped so a pause cannot snap far. */
+ unsigned video_frames=3*steps;uint16_t video_now=audio_game_clock();
+ if(coop_video_valid){
+  coop_video_remainder+=(uint16_t)(video_now-coop_video_clock)*1024u;
+  video_frames=coop_video_remainder/280896u;coop_video_remainder%=280896u;
+  if(video_frames>6)video_frames=6;
+ }
+ coop_video_clock=video_now;coop_video_valid=1;
+ for(unsigned tick=0;tick<video_frames;tick++){
   for(unsigned i=0;i<MAX_ENEMIES+1;i++)if(!i||(game.enemies[i-1].alive==1&&!game_enemy_hit(i-1)&&!game_spell_stoned(i-1)))advance(&motion[i]);for(unsigned i=0;i<4;i++)advance(&coop_motion[i]);
  }
- coop_render_frame+=3*steps;
+ coop_render_frame+=video_frames;
  if(!was_dead&&game.hp<=0)coop_death_menu();
  if(local_revived){
   /* Restore presentation only: a one-peer region reload stalls the link and

@@ -47,6 +47,7 @@ static UI_FN unsigned quick_input(unsigned held,unsigned pressed){
   if(skill_inventory_pending){quick_blocked|=held;return 0;}
  }
  if(pressed&KEY_START){
+  audio_ui(AUDIO_UI_MOVE);
   if(quick_mode==5&&inventory_held()>=0)inventory_drag(127);
   if(menu_mode){menu_close();quick_mode=0;}
   else if(quick_mode>=3)quick_mode=0;
@@ -77,6 +78,8 @@ static UI_FN unsigned quick_input(unsigned held,unsigned pressed){
  if(!quick_mode)return 0;
  quick_blocked|=held;
  if(quick_mode==1){
+  if(pressed&(KEY_SELECT|KEY_UP|KEY_LEFT|KEY_DOWN|KEY_L|KEY_R|KEY_RIGHT))audio_ui(AUDIO_UI_SELECT);
+  else if(pressed&KEY_B)audio_ui(AUDIO_UI_MOVE);
   if(pressed&KEY_SELECT){quick_clear();quick_mode=2;quick_notice=0;spell_choice=hero_progress.spell_slot[hero_progress.spell_active_slot];}
   else if(pressed&KEY_UP){quick_clear();quick_mode=0;menu_mode=1;menu_choice=0;menu_draw();}
   else if(pressed&KEY_LEFT){quick_clear();menu_choice=0;quick_mode=coop_active?4:0;if(!coop_active){menu_mode=6;menu_draw();}}

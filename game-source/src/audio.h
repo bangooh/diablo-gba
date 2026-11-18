@@ -38,6 +38,9 @@ void audio_hero_error(unsigned cls,unsigned reason);
 void audio_hero_death(unsigned cls);
 unsigned audio_game_clock(void); /*16,384-Hz virtual Timer0, stable during8-kHz gold. */
 void audio_effect(unsigned id,unsigned priority);
+/* Local interface feedback only; original Titlemov / Titlslct samples. */
+enum { AUDIO_UI_MOVE, AUDIO_UI_SELECT };
+void audio_ui(unsigned cue);
 void audio_spell(unsigned spell);
 void audio_quest_complete(void);
 void audio_hazard(unsigned type);

@@ -6,8 +6,11 @@ MEMORY {
 }
 SECTIONS {
  .text : { KEEP(*(.gbaheader)) KEEP(*(.save_signature)) *(.text.start) *(.text.ui) *coop.o(.text*) *coop_wire.o(.text*) *link.o(.text*) *audio.o(.text*) *arrows.o(.text*) *progress.o(.text*) *spells.o(.text*) *items.o(.text*) *controller.o(.text*) *potions.o(.text*) *save.o(.text*) *flash.o(.text*) *monster_ai.o(.text*) *objects.o(.text*) *exploration.o(.text*) *world.o(.text*) *runtime.o(.text*) *l2.o(.text*) *l3.o(.text*) *l4.o(.text*) *dungeon.o(.text*) *dungeon_visual.o(.text*) *(.rodata*) . = ALIGN(4); } > ROM
- .iwram : { __fast_start = .; *(.iwram.coop) *(.iwram.info) *(.text*) *(.iwram.diag) . = ALIGN(4); __fast_end = .; } > FAST AT> ROM
+ .iwram : { __fast_start = .; *(.iwram.coop) *(.iwram.info) *(.iwram.hot) *(.text*) *(.iwram.diag) . = ALIGN(4); __fast_end = .; } > FAST AT> ROM
  __fast_load = LOADADDR(.iwram);
+ /* Uninitialised IWRAM data right after the code, inside the same 24K FAST
+  * budget, so the ~8KiB reserved for stacks above it is unchanged. */
+ .iwram_bss (NOLOAD) : { *(.iwram_bss*) . = ALIGN(4); __iwram_bss_end = .; } > FAST
  .data : { __data_start = .; *(.data*) . = ALIGN(4); __data_end = .; } > RAM AT> ROM
  __data_load = LOADADDR(.data);
  .bss (NOLOAD) : { __bss_start = .; *(.bss*) *(COMMON) . = ALIGN(4); __bss_end = .; } > RAM

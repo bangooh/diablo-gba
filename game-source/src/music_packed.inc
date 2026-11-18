@@ -4,10 +4,11 @@
  * Bit7 selects delta blocks: first sample, signed16 minimum difference,
  * then255 packed differences; PCM remains byte-exact.
  * Only the caller's existing music buffer is written; no decoder state or
- * scratch survives the call. Keep this code in ROM, outside the IWRAM budget.
+ * scratch survives the call. This per-sample loop is 3-4% of frame time when
+ * run from ROM as ARM, so it runs from IWRAM (space freed from game_step).
  * Caller supplies count <= 256 and position + count <= the track length. */
 #include "../generated/music_town_packed.h"
-static __attribute__((section(".text.ui"),noinline)) void music_packed_stream_map(
+static __attribute__((section(".iwram.hot"),noinline)) void music_packed_stream_map(
  int8_t *dest,const uint8_t *source,unsigned position,const int8_t *gain,unsigned count){
  const uint32_t *offsets=(const uint32_t*)source;
  while(count){

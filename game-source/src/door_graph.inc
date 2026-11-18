@@ -69,7 +69,7 @@ static UI_FN void closed_door_prepare(void){
  if(closed_door_cull_valid&&from==door_graph_origin)return;
  door_graph_origin=from;door_graph_reach(DG_CLOSED,from);closed_door_cull_valid=1;
 }
-static UI_FN unsigned closed_door_monster_hidden(unsigned i){
+THUMB_FN static UI_FN unsigned closed_door_monster_hidden(unsigned i){
  if(game.area||!closed_door_cull_enabled)return 0;
  if(door_graph_state!=1)return closed_door_fallback_hidden(i);
  const Enemy *e=&game.enemies[i];unsigned to=door_graph_at(e->x,e->y);

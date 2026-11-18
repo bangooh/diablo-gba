@@ -216,6 +216,13 @@ static UI_FN __attribute__((target("thumb"),minsize)) unsigned frontend_run(int 
    * presenting. Do not add two more idle refreshes to their input loop. */
   for(int n=0;n<(mode==7||mode==10?0:2);n++)front_vblank();ticks+=3;
   unsigned held=(~R16(0x04000130))&1023,pressed=held&~prev;prev=held;
+  /* Edge-triggered local feedback; automatic title/lobby transitions stay silent. */
+  if(mode!=8){
+   if(pressed&(KEY_A|KEY_START))audio_ui(AUDIO_UI_SELECT);
+   else if(pressed&KEY_B)audio_ui(AUDIO_UI_MOVE);
+   else if((pressed&(KEY_UP|KEY_DOWN))&&(mode==3||mode==4||mode==9||mode==10||(mode==7&&saved)))audio_ui(AUDIO_UI_MOVE);
+  }else if(pressed&KEY_B)audio_ui(AUDIO_UI_MOVE);
+  else if(((pressed&KEY_R)&&link_can_start_cpu(&link_state))||(!link_state.role&&link_state.connected&&!link_state.launch&&(pressed&(KEY_A|KEY_R))))audio_ui(AUDIO_UI_SELECT);
   if(mode==2){if((pressed&(KEY_A|KEY_B|KEY_START))||ticks>=420){frontend_mode=3;choice=0;ticks=0;}continue;}
   if(mode==8){
    if(link_can_start_cpu(&link_state)&&(pressed&KEY_R)){link_close();link_state.role=0;link_state.members=1;coop_cpu_mask=14;front_connecting(&page);frontend_mode=0;return 100;}

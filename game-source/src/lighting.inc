@@ -77,7 +77,7 @@ static UI_FN void lighting_sources(void){
 #endif
  if(previous!=light_count)light_moved=1;
 }
-static UI_FN unsigned lighting_at(int x,int y){
+THUMB_FN static UI_FN unsigned lighting_at(int x,int y){
  if(!light_count)return 0;unsigned best=3;
  for(unsigned i=0;i<light_count;i++){
   int dx=x-light_sources[i].x,dy=y-light_sources[i].y;
@@ -132,7 +132,7 @@ static UI_FN void lighting_pixels(uint8_t *pixels,int x,int y){
   for(unsigned col=0;col<8;col++,dark>>=1)if(dark&1)pixels[row*8+col]=light_bg[pixels[row*8+col]];
  }
 }
-static UI_FN void lighting_actor(uint8_t *pixels,unsigned band,unsigned bank,const uint32_t tiles[2]){
+THUMB_FN static UI_FN void lighting_actor(uint8_t *pixels,unsigned band,unsigned bank,const uint32_t tiles[2]){
  if(band&&(tiles[0]|tiles[1])){const uint8_t *lut=light_obj+bank*16;
   /* GBA adaptation: immutable UI bank5 supplies three red heat shades.
    * No palette writes: safe with 8bpp corpses, multiplayer and spell banks.

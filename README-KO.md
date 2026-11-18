@@ -1,4 +1,13 @@
-# Diablo GBA 0.9.6 source distribution — English / Korean
+# Diablo GBA 0.9.7 source distribution — English / Korean
+
+## Version 0.9.7
+
+렌더링·VBlank 최적화, 메뉴 효과음, 협동 이동 보간과 BGM 복원을 포함합니다. 사용자 실기·링크 플레이 검증을 완료했습니다.
+
+Renderer and VBlank scheduling improvements, menu sounds, smoother co-op motion,
+and restored co-op music with a separate item-effect cache.
+See [changes, measurements and validation limits](docs/RELEASE-0.9.7.md).
+
 
 ## English
 

@@ -35,7 +35,7 @@ static UI_FN void death_sprite_palette(void){
 static UI_FN int death_sprite_visible(const Motion *m){
  int x=(m->x>>8)-cam_x,y=(m->y>>8)-cam_y;return x>=-32&&x<=272&&y>=0&&y<=208;
 }
-static UI_FN void death_sprite_plan(void){
+THUMB_FN static UI_FN void death_sprite_plan(void){
  if(!DEATH_SPRITES||game.area)return;
  DeathSprites *s=DEATH_SPRITE_STATE;
  /* Keep last frame's bodies available for terrain invalidation. The final
@@ -101,7 +101,7 @@ static UI_FN int death_sprite_mask_valid(unsigned slot,int wx,int wy){
 static inline unsigned death_pixel(unsigned x,unsigned y){return (y/8*8+x/8)*64+(y&7)*8+(x&7);}
 /* Expand the sparse frame straight into hardware tile order. No linear 4K
  * copy or transpose, and the four BG decode slots remain available to overflow. */
-static UI_FN void death_sprite_decode(unsigned frame,uint8_t *out,const uint8_t *lut){
+THUMB_FN static UI_FN void death_sprite_decode(unsigned frame,uint8_t *out,const uint8_t *lut){
  for(unsigned i=0;i<1024;i++)((uint32_t*)out)[i]=0;
  const uint8_t *picture=asset_floor_decals+((const uint32_t*)asset_floor_decals)[frame+1];
  const uint8_t *body=asset_floor_decals+*(const uint32_t*)(picture+8),*palette=asset_floor_decals+*(const uint32_t*)(picture+4);
@@ -130,7 +130,7 @@ static UI_FN void death_sprite_decode(unsigned frame,uint8_t *out,const uint8_t 
 /* Two unused living raw-cache slots can retain a decoded, unmasked corpse.
  * Both halves are tagged and pinned: a later living frame may evict either
  * half, which makes the next lookup miss safely. No new RAM is reserved. */
-static UI_FN void death_sprite_cached_decode(unsigned frame,uint8_t *out,unsigned slot,unsigned key,const uint8_t *lut){
+THUMB_FN static UI_FN void death_sprite_cached_decode(unsigned frame,uint8_t *out,unsigned slot,unsigned key,const uint8_t *lut){
  unsigned pinned=0;int cached=-1;
  for(unsigned i=0;i<13;i++)if(d_raw_ref[i]<13)pinned|=1u<<d_raw_ref[i];
  for(unsigned i=0;i<12;i++)if(d_raw_base[i]==asset_floor_decals&&d_raw_base[i+1]==asset_floor_decals&&
@@ -148,7 +148,7 @@ static UI_FN void death_sprite_cached_decode(unsigned frame,uint8_t *out,unsigne
  const uint8_t *raw=(uint8_t*)town_map+RAW_DUNGEON_ART+MAP_W*MAP_H*2+(unsigned)cached*2048;
  dma(raw,out,2048);dma(raw+2048,out+2048,2048);
 }
-static UI_FN void death_sprite_mask(uint8_t *pixels,int wx,int wy,int foot,unsigned start){
+THUMB_FN static UI_FN void death_sprite_mask(uint8_t *pixels,int wx,int wy,int foot,unsigned start){
  for(int ty=0;ty<8;ty++)for(int tx=0;tx<8;tx++){
   int x=render_tile(wx)+tx,y=render_tile(wy)+ty;
   if(x<render_tile(cam_x)||x>render_tile(cam_x+239)||y<render_tile(cam_y)||y>render_tile(cam_y+159)){
@@ -209,7 +209,7 @@ static UI_FN uint8_t *actor_stage_buffer(unsigned slot){
  if(slot<=7)return (uint8_t*)load_buffer+12288+(slot-5)*2048;
  return DEATH_SPRITE_STAGE+(slot-8)*2048;
 }
-static UI_FN int death_sprite_stage_actor(unsigned slot,const void *pixels,const uint32_t changed[2]){
+THUMB_FN static UI_FN int death_sprite_stage_actor(unsigned slot,const void *pixels,const uint32_t changed[2]){
  if(!DEATH_SPRITES||game.area||slot>=13)return 0;
  DeathSprites *s=DEATH_SPRITE_STATE;
  /* Every modified dungeon actor is staged. Old OAM must keep its matching
@@ -224,7 +224,8 @@ static UI_FN int death_sprite_stage_actor(unsigned slot,const void *pixels,const
  /* Fragmented tiny transfers cost more than a bounded full-slot DMA. */
  D_STAGE_TILES[slot][0]=(runs>4||tiles>32)?~0u:changed[0];
  D_STAGE_TILES[slot][1]=(runs>4||tiles>32)?~0u:changed[1];
- dma(pixels,actor_stage_buffer(slot),2048);
+ /* load_town_frame masks dungeon actors in place in this buffer already. */
+ if(pixels!=actor_stage_buffer(slot))dma(pixels,actor_stage_buffer(slot),2048);
  s->pending|=(uint16_t)(1u<<slot);return 1;
 }
 /* The caller admits this commit within a size-bounded VBlank window and follows it with palette
@@ -233,7 +234,7 @@ static UI_FN int death_sprite_stage_actor(unsigned slot,const void *pixels,const
 static UI_FN int death_sprite_upload_pending(void){
  return DEATH_SPRITES&&!game.area&&DEATH_SPRITE_STATE->pending;
 }
-static UI_FN unsigned death_sprite_commit_last_line(void){
+THUMB_FN static UI_FN unsigned death_sprite_commit_last_line(void){
  const DeathSprites *s=DEATH_SPRITE_STATE;unsigned tiles=0,runs=0;
  for(unsigned slot=0;slot<13;slot++)if(s->pending&(1u<<slot)){
   if(slot>=11){
@@ -258,7 +259,7 @@ static UI_FN unsigned death_sprite_commit_last_line(void){
 
 /* Full bounded2KiB chunks avoid fragmented-run setup in the raster transfer.
  * Buffers contain the entire final image, including transparent erasures. */
-static UI_FN void death_sprite_commit_one(unsigned slot){
+THUMB_FN static UI_FN void death_sprite_commit_one(unsigned slot){
  DeathSprites *s=DEATH_SPRITE_STATE;
  if(slot>=11){effect_tiles_commit_range(16+(slot-11)*16,32+(slot-11)*16);s->pending&=(uint16_t)~(1u<<slot);return;}
  unsigned corpse=s->count&&slot>=s->first&&slot<s->first+s->count*2;
@@ -266,7 +267,7 @@ static UI_FN void death_sprite_commit_one(unsigned slot){
  dma(pixels,(void*)(0x06010000+slot*2048),2048);
  s->pending&=(uint16_t)~(1u<<slot);
 }
-static UI_FN void death_sprite_commit_tiles(void){
+THUMB_FN static UI_FN void death_sprite_commit_tiles(void){
  if(!DEATH_SPRITES||game.area)return;
  DeathSprites *s=DEATH_SPRITE_STATE;if(!s->pending)return;
  s->commit_start=R16(0x04000006);

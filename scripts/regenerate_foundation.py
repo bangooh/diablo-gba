@@ -102,6 +102,7 @@ def main():
     tool('pack_audio134', mpq)
     tool('pack_audio_gains')
     tool('pack_item_grab_rc7', mpq)
+    tool('pack_ui_audio', mpq)
     tool('pack_entry_cows', mpq)
     tool('stage53_dialogue_catalog')
     tool('pack_quest_prose_stage71')

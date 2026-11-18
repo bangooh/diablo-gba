@@ -195,7 +195,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void quick_canvas_draw(uns
 }
 static UI_FN void spellbook_input(unsigned pressed){
  if(!pressed)return;
- if(pressed&KEY_B){quick_mode=1;quick_notice=0;quick_clear();return;}
+ if(pressed&KEY_B){quick_mode=0;quick_notice=0;quick_clear();return;}
  if(pressed&(KEY_L|KEY_R|KEY_LEFT|KEY_RIGHT)){
   spellbook_page=(spellbook_page+((pressed&(KEY_L|KEY_LEFT))?3:1))&3;spellbook_row=0;
   for(unsigned i=0;i<7;i++)if(spellbook_choice(spellbook_pages[spellbook_page][i])){spellbook_row=(uint8_t)i;break;}

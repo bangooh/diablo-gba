@@ -1,6 +1,6 @@
 /* Retail Betrayer / Diablo quest transitions, with GBA text-scene adapters. */
 #include "../generated/finale_assets.h"
-QUEST_FN int game_finale_protected(unsigned kind){if(kind==MONSTER_WARLORD)return quest_progress.stage[11]<2;if(kind==MONSTER_GHARBAD)return quest_progress.stage[2]<7;if(kind==MONSTER_ZHAR)return quest_progress.stage[3]<3;return dungeon_level==REGION_VILE&&quest_progress.stage[15]<6&&kind>=MONSTER_LAZARUS&&kind<=MONSTER_BLACK_JADE;}
+THUMB_FN QUEST_FN int game_finale_protected(unsigned kind){if(kind==MONSTER_WARLORD)return quest_progress.stage[11]<2;if(kind==MONSTER_GHARBAD)return quest_progress.stage[2]<7;if(kind==MONSTER_ZHAR)return quest_progress.stage[3]<3;return dungeon_level==REGION_VILE&&quest_progress.stage[15]<6&&kind>=MONSTER_LAZARUS&&kind<=MONSTER_BLACK_JADE;}
 static QUEST_FN void finale_guard(Game *g,unsigned slot,unsigned x,unsigned y,unsigned kind){
  /* A few native Hell guards occupy SOL-marked wall corners. Move only those
   * records to an adjacent free cell; retain all other native placements. */

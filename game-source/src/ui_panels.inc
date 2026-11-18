@@ -39,7 +39,7 @@ static UI_FN void panel_cursor(unsigned y,unsigned frame,unsigned left,unsigned 
  * shadow, fits one tile row in the bounded death-menu dictionary. */
 static UI_FN void menu_cursor(unsigned frame){
  if(menu_mode==1)panel_cursor((coop_active?57:46)+menu_choice*11*(coop_active?2:1),frame,43,187);
- else if(menu_mode==2)panel_cursor(47+(menu_choice-(coop_active?1:0))*16,frame,22,215);
+ else if(menu_mode==2)panel_cursor(47+menu_choice*16,frame,22,215);
  else if(menu_mode==15)panel_cursor(71+menu_choice*18,frame,43,187);
 }
 /* Death keeps the frozen dungeon beneath a transparent font overlay.
@@ -59,7 +59,7 @@ static UI_FN __attribute__((minsize)) void death_cursor_prepare(void){
 }
 static UI_FN __attribute__((minsize)) void death_menu_cursor(void){
  if(menu_mode!=1&&menu_mode!=2&&menu_mode!=15)return;
- unsigned frame=(audio_game_clock()/1640)&7,y=menu_mode==1?39+menu_choice*16:menu_mode==2?47+(menu_choice-(coop_active?1:0))*16:71+menu_choice*18;
+ unsigned frame=(audio_game_clock()/1640)&7,y=menu_mode==1?39+menu_choice*16:menu_mode==2?47+menu_choice*16:71+menu_choice*18;
  const uint8_t *src=panel_cursor_tiles[frame];
  for(unsigned i=0;i<128;i++)R16(0x06010000+832*32+i*2)=R16(0x06010000+840*32+(src[i]&15)*2)|(R16(0x06010000+840*32+(src[i]>>4)*2)<<8);
  for(unsigned side=0;side<2;side++){
@@ -91,10 +91,10 @@ static UI_FN __attribute__((target("thumb"),minsize)) void death_menu_draw(void)
    for(unsigned i=0;i<(coop_active?4u:5u);i++)panel_center(p,top,40+i*16,coop_active?coop_items[i]:items[i],i? action:gray,0);
   }else if(menu_mode==2){
    const char *items[]={"Music","Sound","Gamma","D-pad Rotation","Previous Menu"};unsigned levels[]={audio_music_volume,audio_effects_volume,gamma_level+1};
-   for(unsigned i=coop_active?1:0;i<5;i++){
-    unsigned y=48+(i-(coop_active?1:0))*16;
+   for(unsigned i=0;i<5;i++){
+    unsigned y=48+i*16;
     quick_text(p,top,39,y,items[i],action,0);
-    if(i<3){char value[12],*end=quick_number(value,levels[i]);end=quick_append(end,i==2?"/20":"/10");*end=0;quick_text(p,top,181,y,value,gold,0);}
+    if(i<3){char value[12],*end=!i&&!audio_music_enabled?quick_append(value,"Off"):quick_append(quick_number(value,levels[i]),i==2?"/20":"/10");*end=0;quick_text(p,top,181,y,value,gold,0);}
     else if(i==3)quick_text(p,top,210-quick_text_width(options_dpad_labels[dpad_rotation],1),y+1,options_dpad_labels[dpad_rotation],gold,1);
    }
   }else if(menu_mode==15){
@@ -148,10 +148,10 @@ static UI_FN __attribute__((minsize)) void menu_canvas_draw(void){
   }else if(menu_mode==2){
    const char *items[]={"Music","Sound","Gamma","D-pad Rotation","Previous Menu"};
    unsigned levels[]={audio_music_volume,audio_effects_volume,gamma_level+1};
-   for(unsigned i=coop_active?1:0;i<5;i++){
-    unsigned y=48+(i-(coop_active?1:0))*16;
+   for(unsigned i=0;i<5;i++){
+    unsigned y=48+i*16;
     quick_text(p,top,39,y,items[i],action,0);
-    if(i<3){char value[12],*end=quick_number(value,levels[i]);end=quick_append(end,i==2?"/20":"/10");*end=0;quick_text(p,top,181,y,value,gold,0);}
+    if(i<3){char value[12],*end=!i&&!audio_music_enabled?quick_append(value,"Off"):quick_append(quick_number(value,levels[i]),i==2?"/20":"/10");*end=0;quick_text(p,top,181,y,value,gold,0);}
     else if(i==3)quick_text(p,top,210-quick_text_width(options_dpad_labels[dpad_rotation],1),y+1,options_dpad_labels[dpad_rotation],gold,1);
    }
 

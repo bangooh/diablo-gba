@@ -1,3 +1,4 @@
+#define THUMB_FN __attribute__((target("thumb")))
 #include "actor_frames.h"
 #include "lz.h"
 #define ROM_FN __attribute__((section(".text.ui")))
@@ -8,7 +9,7 @@
  * ROM assets own the source allocation, as with SPR1/LZ; offsets/lengths are
  * checked against the declared clip length before any destination is changed.
  * Independent records need no scratch or persistent decoder state. */
-static ROM_FN const uint32_t *raw_tile_record(const uint8_t *clip,unsigned index){
+THUMB_FN static ROM_FN const uint32_t *raw_tile_record(const uint8_t *clip,unsigned index){
  if((uintptr_t)clip&3)return 0;
  unsigned count=lz_word(clip+4),limit=lz_word(clip+8);
  if(limit<12||limit>32u*1024*1024||!count||count>(limit-12)/4||index>=count)return 0;
@@ -67,7 +68,7 @@ static __attribute__((noinline)) unsigned xor_nibbles(const uint8_t *data,unsign
 }
 /* Up to three sparse XOR patches on one independent key frame. No recursion,
  * allocation, persistent decompression state, or actor-dependent cache keys. */
-ROM_FN unsigned actor_frame_external(const uint8_t *clip,unsigned index,void *destination,unsigned capacity,
+THUMB_FN ROM_FN unsigned actor_frame_external(const uint8_t *clip,unsigned index,void *destination,unsigned capacity,
                             void *scratch,const uint8_t *pool,const uint8_t *external_pool){
  unsigned magic=lz_word(clip);
  if(magic==RAW_TILE_MAGIC)return raw_tile_frame(clip,index,destination,capacity);

@@ -410,10 +410,19 @@ static UI_FN void menu_close(void){
 static UI_FN void menu_reload(unsigned animation){
     load_scene();reset_visuals();draw(animation);reveal_scene();
 }
+static UI_FN void menu_input_sound(unsigned pressed){
+ if(!(menu_mode<=6||menu_mode==15))return;
+ if(pressed&(KEY_B|KEY_START)){audio_ui(AUDIO_UI_MOVE);return;}
+ if(pressed&KEY_A){
+  if(menu_mode!=2||menu_choice>=3)audio_ui(AUDIO_UI_SELECT);
+ }else if((menu_mode==1||menu_mode==2||menu_mode==6||menu_mode==15)&&(pressed&(KEY_UP|KEY_DOWN)))audio_ui(AUDIO_UI_MOVE);
+ else if(menu_mode==1&&active_game&&(pressed&KEY_R))audio_ui(AUDIO_UI_SELECT);
+}
 static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned pressed,unsigned *animation){
     audio_speech_poll();
     if(menu_mode==NPC_SPEECH)pressed=dialogue_repeat(pressed);
     if(!pressed)return;
+    menu_input_sound(pressed);
     if(menu_mode>=NPC_LANDING&&menu_mode<=NPC_SPEECH){dialogue_input(pressed);return;}
     if(menu_mode==15){
      if(pressed&(KEY_B|KEY_START)){menu_mode=1;menu_choice=2;}
@@ -476,10 +485,11 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
     else if(pressed&KEY_DOWN)menu_choice=(menu_choice+1)%item_count;
     if(menu_mode==1&&active_game&&game.hp<=0&&!menu_choice)menu_choice=(pressed&KEY_UP)?4:1;
     if(menu_mode==2){
-        if(coop_active&&!menu_choice)menu_choice=(pressed&KEY_UP)?4:1;
         if(menu_choice==0 && (pressed&(KEY_LEFT|KEY_RIGHT))){
-            audio_music_enabled=1;
-            audio_set_music_volume((unsigned)clamp((int)audio_music_volume+((pressed&KEY_RIGHT)?1:-1),1,10));
+            /* 0 is Off (the saved mute value). */
+            int level=clamp((int)(audio_music_enabled?audio_music_volume:0)+((pressed&KEY_RIGHT)?1:-1),0,10);
+            audio_music_enabled=level!=0;
+            audio_set_music_volume(level?(unsigned)level:audio_music_volume);
         }
         if(menu_choice==1 && (pressed&(KEY_LEFT|KEY_RIGHT))){
             audio_effects_enabled=1;
@@ -493,6 +503,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
             dpad_rotation=(dpad_rotation+((pressed&KEY_LEFT)?1:2))%OPTIONS_DPAD_COUNT;
         }
         if((pressed&KEY_A)&&menu_choice==4){menu_mode=1;menu_choice=coop_active&&game.hp>0?0:1;}
+        else if(menu_choice<4&&(pressed&(KEY_LEFT|KEY_RIGHT)))audio_ui(AUDIO_UI_MOVE);
     }else if(pressed&KEY_A){
         if(menu_choice==0){
             menu_mode=4;menu_notice=!active_game||game.hp<=0?"SAVE UNAVAILABLE":save_write(*animation)?"GAME SAVED":"SAVE FAILED";

@@ -149,7 +149,10 @@ static __attribute__((section(".text.ui"),noinline)) void terrain_dirty(unsigned
  if(!game.area)terrain_dirty_rows|=1u<<(slot/31);
 #endif
 }
-static __attribute__((section(".text.ui"),noinline)) void terrain_invalidate(unsigned slot){ring_x[slot]=RING_INVALID;terrain_dirty(slot);}
+/* Every ring invalidation passes here, so stream_town may skip its full
+ * 31x21 scan while the camera tile is unchanged and nothing was invalidated. */
+static uint8_t town_stream_dirty=1;
+static __attribute__((section(".text.ui"),noinline)) void terrain_invalidate(unsigned slot){ring_x[slot]=RING_INVALID;town_stream_dirty=1;terrain_dirty(slot);}
 static uint8_t town_depth[WORLD_TILES+32][64] __attribute__((aligned(4)));
 #define MAP_OUTLINE ((uint8_t*)town_depth+WORLD_TILES*64)
 static uint32_t map_revealed_words[450];
@@ -160,7 +163,7 @@ static uint16_t depth_max[WORLD_TILES];
 
 /*43 extra terrain tiles use spare panel cells, unused BG1 map rows and
  * seven status-frame cells. Menus restore those cells before using them. */
-static inline unsigned world_tile(unsigned slot){
+__attribute__((section(".text.ui"))) static inline unsigned world_tile(unsigned slot){
  if(slot<608)return slot;slot-=608;
  if(slot<4)return 512+181+slot;slot-=4;
  if(slot<19)return 512+226+slot;slot-=19;
@@ -233,6 +236,11 @@ static void automap_prime(void);
 static void automap_blend(void);
 volatile unsigned map_unique_tiles,map_tile_overflows;
 #define UI_FN __attribute__((section(".text.ui"),noinline))
+/* ROM-resident renderer code: the cartridge bus is 16 bits wide, so a Thumb
+ * opcode is one fetch and an ARM opcode two. Applied to the measured hot ROM
+ * functions whose Thumb build does not push large helpers into IWRAM
+ * (Clang does not inline across ARM/Thumb). */
+#define THUMB_FN __attribute__((target("thumb")))
 #include "../generated/town_shortcuts.inc"
 #include "../generated/town_well.inc"
 #ifndef LIGHT_HARDWARE
@@ -267,6 +275,8 @@ static UI_FN unsigned hero_palette_bank(unsigned cls);
 static UI_FN unsigned monster_palette_bank(unsigned kind,unsigned selected);
 static UI_FN void monster_palette_load(void);
 static unsigned infravision_frame, actor_infra_tint;
+/* Filled by visible_actors_collect() (dormant_monsters.inc) once per draw. */
+static uint8_t visible_actors[MAX_ENEMIES+1],visible_actor_count;
 #include "actor_palette.inc"
 #include "water_palette.inc"
 static uint8_t globe_colors[GLOBE_COLORS],globe_levels[2];
@@ -277,6 +287,13 @@ static UI_FN int death_sprite_index(unsigned corpse);
 static UI_FN void death_sprite_draw(void);
 static UI_FN void death_sprite_invalidate_rect(int x,int y,int width,int height);
 static UI_FN int death_sprite_stage_actor(unsigned slot,const void *pixels,const uint32_t changed[2]);
+static UI_FN uint8_t *actor_stage_buffer(unsigned slot);
+#ifndef ACTOR_STAGE_CHECK
+#define ACTOR_STAGE_CHECK 0
+#endif
+#if ACTOR_STAGE_CHECK
+volatile uint32_t actor_stage_checks,actor_stage_mismatches;
+#endif
 static int last_hp=-1,last_mana=-1,last_max_mana=-1;
 static const char glyphs[]=HUD_GLYPHS;
 /* Glyph index plus one; zero retains the original unsupported-byte space. */
@@ -711,8 +728,14 @@ static UI_FN void reveal_scene(void){
 }
 #include "town_items.inc"
 static UI_FN void stream_town(void){
+    static int16_t streamed_tx=RING_INVALID,streamed_ty=RING_INVALID;
     TownItemDraw items[TOWN_DROPS+5];unsigned item_count=town_items_prepare(items),item_ready=0;uint8_t item_lut[2][16];
     int tx=render_tile(cam_x),ty=render_tile(cam_y);
+    /* A completed scan leaves all WORLD_TILES slots naming this window. Only
+     * stream_town and the dungeon geometry path claim slots, and leaving the
+     * town invalidates every slot first, so the scan would find nothing. */
+    if(!town_stream_dirty&&tx==streamed_tx&&ty==streamed_ty)return;
+    town_stream_dirty=0;streamed_tx=(int16_t)tx;streamed_ty=(int16_t)ty;
     for(int y=ty;y<=ty+20;y++)for(int x=tx;x<=tx+30;x++){
         int slot=render_slot(x,y);
         if(ring_x[slot]!=x || ring_y[slot]!=y){
@@ -769,7 +792,7 @@ static UI_FN unsigned floor_extra_prepare(void){
 }
 static UI_FN unsigned floor_cache_key(unsigned slot){return slot<3?DEATH_KEYS[slot]:FLOOR_EXTRA_KEYS[slot];}
 static UI_FN uint8_t *floor_cache_pixels(unsigned slot){return slot<3?DEATH_CACHE+slot*4096:DEATH_SPRITE_STAGE+slot*4096;}
-static UI_FN void floor_cache_resolve(const FloorDraw *list,unsigned count,unsigned capacity){
+THUMB_FN static UI_FN void floor_cache_resolve(const FloorDraw *list,unsigned count,unsigned capacity){
  FLOOR_CACHE_PINNED=0;
  for(unsigned i=0;i<count;i++){
   unsigned slot=255;
@@ -797,7 +820,7 @@ static UI_FN const uint8_t *floor_cache_get(unsigned index){
 }
 /* Conservative per-screen-tile coverage keeps lighting-only updates O(1).
  * Animated tiles retain geometry-only caches, avoiding a rebuild each frame. */
-static UI_FN void floor_coverage(void){
+THUMB_FN static UI_FN void floor_coverage(void){
  for(unsigned i=0;i<42;i++)FLOOR_COVERAGE[i]=0;
  const FloorDraw *list=FLOOR_LIST(floor_list);int sx=render_tile(cam_x),sy=render_tile(cam_y);
  for(unsigned i=0;i<floor_count[floor_list];i++){
@@ -824,7 +847,7 @@ static UI_FN void floor_coverage(void){
  }
 }
 #include "floor_dirty.inc"
-static UI_FN void floor_prepare(void){
+THUMB_FN static UI_FN void floor_prepare(void){
  death_sprite_plan();
  unsigned capacity=floor_extra_prepare();
  unsigned next=floor_list^1,n=0;FloorDraw *out=FLOOR_LIST(next),*old=FLOOR_LIST(floor_list);
@@ -878,7 +901,7 @@ static UI_FN void floor_blit_clear(const uint8_t *cached,int x,int y,int top,int
   }
  }
 }
-static UI_FN void floor_overlay(int px,int py,int slot,uint8_t *pixels){
+THUMB_FN static UI_FN void floor_overlay(int px,int py,int slot,uint8_t *pixels){
  const FloorDraw *list=FLOOR_LIST(floor_list);
  const uint32_t *offsets=(const uint32_t*)asset_floor_decals+1;
  for(unsigned i=0;i<floor_count[floor_list];i++){
@@ -954,7 +977,7 @@ enum { COOP_TERRAIN_STAGE_TILES=240 };
 #define FRAME_MAP ((uint16_t*)(DEATH_SPRITE_STAGE+11*2048))
 #define COOP_TERRAIN_INDEX (DEATH_SPRITE_STAGE+5*2048)
 _Static_assert(COOP_TERRAIN_STAGE_TILES*66<=4*4096,"co-op terrain stage capacity");
-static UI_FN void terrain_stage(unsigned slot,const void *pixels,unsigned invalid_raw){
+THUMB_FN static UI_FN void terrain_stage(unsigned slot,const void *pixels,unsigned invalid_raw){
  if(coop_active&&terrain_upload_count<COOP_TERRAIN_STAGE_TILES){
   dma(pixels,COOP_TERRAIN_STAGE+terrain_upload_count*64,64);
   COOP_TERRAIN_SLOTS[terrain_upload_count]=(uint16_t)slot;
@@ -970,7 +993,7 @@ static UI_FN void terrain_stage(unsigned slot,const void *pixels,unsigned invali
  light_tiles[slot]|=32;terrain_upload_count++;
 }
 #if PERF_TERRAIN_ROWS
-static UI_FN int terrain_row_reusable(unsigned row,unsigned column,int tx,int y){
+THUMB_FN static UI_FN int terrain_row_reusable(unsigned row,unsigned column,int tx,int y){
  unsigned bit=1u<<(row/31),dirty=terrain_dirty_rows&bit;
  terrain_dirty_rows&=~bit;
  if(dirty)return 0;
@@ -1098,18 +1121,25 @@ static int direction(int dx,int dy){
     if(!sy)return sx>0?6:2;
     return sy>0?(sx>0?7:1):(sx>0?5:3);
 }
+/* Bumped by every Motion write helper and by every single-player path that can
+ * change Game: a simulation tick, menus and popups. Unchanged means no enemy
+ * record and no Motion has changed since the last full dormant sync. */
+static uint32_t actor_revision;
 static UI_FN void place(Motion *m,int x,int y){
+    actor_revision++;
     m->x=m->sx=m->tx=((game.area?1536:DUNGEON_ORIGIN)+(x-y)*16)<<8;
     m->y=m->sy=m->ty=((game.area?128:72)+(x+y)*8)<<8;
     m->elapsed=m->total=0;m->dir=0;
 }
 static UI_FN void move_to(Motion *m,int x,int y,int oldx,int oldy,int duration){
     if(x==oldx&&y==oldy)return;
+    actor_revision++;
     if(x-oldx>1||oldx-x>1||y-oldy>1||oldy-y>1){place(m,x,y);return;}
     m->sx=m->x;m->sy=m->y;m->tx=((game.area?1536:DUNGEON_ORIGIN)+(x-y)*16)<<8;m->ty=((game.area?128:72)+(x+y)*8)<<8;
     m->elapsed=0;m->total=duration;m->dir=direction(x-oldx,y-oldy);
 }
-static void advance(Motion *m){
+/* Inlined into ARM callers; the out-of-line copy serves Thumb ROM callers. */
+static __attribute__((section(".text.ui"))) void advance(Motion *m){
     if(m->elapsed<m->total){
         ++m->elapsed;
         m->x=m->sx+(m->tx-m->sx)*m->elapsed/m->total;
@@ -1133,13 +1163,14 @@ static UI_FN void reset_visuals(void){
     last_hud_tick=0xffffffffu;
     automap_prime();
 }
-static void add_obj(int x,int y,int depth,int tile,int pal,int shape,int size){
+/* Measured <0.06% of time: ROM, to leave IWRAM for the co-op item cache. */
+static __attribute__((section(".text.ui"))) void add_obj(int x,int y,int depth,int tile,int pal,int shape,int size){
     if(x<-64||x>=240||y<-80||y>=160)return;
     if(object_count<(game.area?40:84))objects[object_count++]=(Obj){(x&511)|(pal<<9)|(shape<<14),tile|(size<<14),y,depth};
 }
 /* Cached pixels are keyed by asset/direction/frame, never actor identity.
  * A reassigned OBJ slot only needs fresh masking when its world position changes. */
-static UI_FN unsigned actor_clear_geometry(int wx,int wy,int foot){
+THUMB_FN static UI_FN unsigned actor_clear_geometry(int wx,int wy,int foot){
     int left=wx>cam_x?wx:cam_x,top=wy>cam_y?wy:cam_y;
     int right=wx+64<cam_x+240?wx+64:cam_x+240,bottom=wy+64<cam_y+160?wy+64:cam_y+160;
     if(left>=right||top>=bottom)return 1;
@@ -1247,6 +1278,22 @@ static UI_FN void actor_upload_tiles(unsigned slot,const void *pixels,const uint
     actor_vram_tiles[slot][0]=tiles[0];actor_vram_tiles[slot][1]=tiles[1];
     if(tiles[0]|tiles[1])actor_hidden_slots&=(uint16_t)~(1u<<slot);else actor_hidden_slots|=(uint16_t)(1u<<slot);
 }
+/* Per-tile depth masking and software lighting of one decoded 64x64 frame.
+ * Touches only the given pixels, tile bits and hidden count. */
+static __attribute__((noinline)) void actor_mask_and_light(uint8_t *pixels,uint32_t tiles[2],unsigned *hidden,
+    unsigned clear,int wx,int wy,int foot,int slot,unsigned band,unsigned bank){
+    /* Reject whole 8x8 OBJ tiles before touching individual packed pixels. */
+    if(!clear)for(unsigned tile=0;tile<64;tile++){
+        /* Most 64x64 actor frames are transparent. Reject empty tiles before
+         * any world/depth lookups, without changing the sprite pixels. */
+        unsigned half=tile>>5,bit=1u<<(tile&31);if(!(tiles[half]&bit))continue;
+        uint32_t *a=(uint32_t*)pixels+tile*8;
+        if(!(a[0]|a[1]|a[2]|a[3]|a[4]|a[5]|a[6]|a[7])){tiles[half]&=~bit;continue;}
+        int left=wx+(tile&7)*8,top=wy+(tile>>3)*8;
+        if(!actor_mask_tile(a,left,top,foot,!slot,hidden))tiles[half]&=~bit;
+    }
+    lighting_actor(pixels,band,bank,tiles);
+}
 static unsigned load_town_frame(int slot,const uint8_t *base,int dir,int frame,int count,int wx,int wy,int foot,unsigned bank){
     unsigned band=lighting_at(wx+32,foot-16);
     if(!game.area&&slot>0&&infravision_frame)band=actor_infra_tint?2:0;
@@ -1284,7 +1331,24 @@ static unsigned load_town_frame(int slot,const uint8_t *base,int dir,int frame,i
         /* Bright actors on open ground need neither a scratch copy nor a
          * transparent-tile/depth pass. Keep the cached raw pixels untouched. */
         if(clear&&!band){actor_upload_tiles(slot,raw,tiles,unknown);goto actor_ready;}
+        /* Every dungeon actor upload is staged (death_sprite_stage_actor), so
+         * mask and light straight in this slot's stage buffer: one 2KiB copy
+         * instead of raw->load_buffer plus load_buffer->stage. */
+        uint8_t *stage=actor_stage_buffer((unsigned)slot);
+#if ACTOR_STAGE_CHECK
+        uint32_t check_tiles[2]={tiles[0],tiles[1]};unsigned check_hidden=hidden;
         dma(raw,load_buffer,2048);
+        actor_mask_and_light((uint8_t*)load_buffer,check_tiles,&check_hidden,clear,wx,wy,foot,slot,band,bank);
+#endif
+        dma(raw,stage,2048);
+        actor_mask_and_light(stage,tiles,&hidden,clear,wx,wy,foot,slot,band,bank);
+#if ACTOR_STAGE_CHECK
+        actor_stage_checks++;
+        {const uint32_t *x=(const uint32_t*)stage,*y=(const uint32_t*)load_buffer;unsigned bad=check_hidden!=hidden||check_tiles[0]!=tiles[0]||check_tiles[1]!=tiles[1];
+         for(unsigned i=0;i<512;i++)bad|=x[i]!=y[i];actor_stage_mismatches+=bad;}
+#endif
+        actor_upload_tiles(slot,stage,tiles,unknown);
+        goto actor_ready;
     }else{
     int cached=-1;
     for(int i=0;i<4;i++)if(raw_base[i]==base && raw_dir[i]==dir && raw_frame[i]==frame){cached=i;break;}
@@ -1296,18 +1360,7 @@ static unsigned load_town_frame(int slot,const uint8_t *base,int dir,int frame,i
         raw_base[cached]=base;raw_dir[cached]=dir;raw_frame[cached]=frame;
     }
     }
-    uint8_t *pixels=(uint8_t*)load_buffer;
-    /* Reject whole 8x8 OBJ tiles before touching individual packed pixels. */
-    if(!clear)for(unsigned tile=0;tile<64;tile++){
-        /* Most 64x64 actor frames are transparent. Reject empty tiles before
-         * any world/depth lookups, without changing the sprite pixels. */
-        unsigned half=tile>>5,bit=1u<<(tile&31);if(!(tiles[half]&bit))continue;
-        uint32_t *a=(uint32_t*)pixels+tile*8;
-        if(!(a[0]|a[1]|a[2]|a[3]|a[4]|a[5]|a[6]|a[7])){tiles[half]&=~bit;continue;}
-        int left=wx+(tile&7)*8,top=wy+(tile>>3)*8;
-        if(!actor_mask_tile(a,left,top,foot,!slot,&hidden))tiles[half]&=~bit;
-    }
-    lighting_actor(pixels,band,bank,tiles);
+    actor_mask_and_light((uint8_t*)load_buffer,tiles,&hidden,clear,wx,wy,foot,slot,band,bank);
     actor_upload_tiles(slot,load_buffer,tiles,unknown);
 actor_ready:
     mask_x[slot]=wx;mask_y[slot]=wy;mask_cam_x[slot]=cam_x;mask_cam_y[slot]=cam_y;
@@ -1412,7 +1465,7 @@ static UI_FN void hud(void){
 static void panel_map(void){
     for(int y=0;y<4;y++)for(int x=0;x<30;x++)hud_map[(y+16)*32+x]=(uint16_t)(x>=4&&x<26?128:129+y*30+x);
 }
-static UI_FN void vital_bars(void){
+THUMB_FN static UI_FN void vital_bars(void){
     unsigned choice=hero_progress.spell_slot[hero_progress.spell_active_slot],key=game_spell_icon_key(&game,choice);
     if(last_spell_icon!=key){
         /* Native textured atlas. A source transition updates four palette entries;
@@ -1720,7 +1773,7 @@ static UI_FN unsigned persistent_image(unsigned index,unsigned spell,unsigned fr
  if(growth)return (22<<8)|growth;
  unsigned native_frame=0,cls=game_spell_effect_pose(index,frame,&native_frame);return cls?(cls<<8)|(native_frame+1):spell_image(spell_effect_class[spell],frame);
 }
-static UI_FN void draw_spell_effects(unsigned frame){
+THUMB_FN static UI_FN void draw_spell_effects(unsigned frame){
  uint16_t arrows[MAX_ARROWS]={0},bolts[MAX_SPELL_BOLTS]={0};uint8_t effects[SPELL_EFFECT_VIEWS]={0};
  unsigned portal=spell_image(10,frame),shield=spell_image(11,0),phase=coop_active||game.paused?0:projectile_phase;
  EffectPlan plan={0};int x,y;
@@ -1910,7 +1963,7 @@ static UI_FN unsigned dormant_image_clear(unsigned slot,int wx,int wy,int foot);
 #include "crowd_frames.inc"
 /* Static props keep their decoded frame until their four-byte state changes.
  * Time/quest/player-dependent kinds always use the authoritative frame path. */
-static UI_FN void prop_frames_prepare(void){
+THUMB_FN static UI_FN void prop_frames_prepare(void){
  static const uint8_t dynamic[256]={
   [PROP_FLAME_X]=1,[PROP_FLAME_Y]=1,[PROP_BLOOD_FOUNTAIN]=1,[PROP_PURIFYING_FOUNTAIN]=1,
   [PROP_MURKY_FOUNTAIN]=1,[PROP_TEAR_FOUNTAIN]=1,[PROP_THEME_CANDLE]=1,[PROP_SKEL_FIRE]=1,
@@ -1946,7 +1999,7 @@ static UI_FN void prop_frames_prepare(void){
 #include "dormant_monsters.inc"
 /* Calculate the upload budget BEFORE waiting for VBlank. Counting actor
  * runs after scanline160 consumed the safe window and forced an extra wait. */
-static UI_FN void frame_prepare_commit(void){
+THUMB_FN static UI_FN void frame_prepare_commit(void){
  unsigned last=death_sprite_upload_pending()?death_sprite_commit_last_line():210u;
  unsigned n=terrain_upload_count;
  unsigned lines=12+(n?8+(n+3)/4:0)+effect_tiles_base_budget();
@@ -1987,6 +2040,7 @@ static void draw(unsigned frame){
     infravision_frame=!!game_infravision();
     closed_door_prepare();closed_door_skipped=0;
     dormant_motion_prepare();
+    visible_actors_collect();
     actor_palette_plan();
     object_count=0;int sprite_slot=0;
     for(int i=0;i<MAX_ENEMIES+1;i++){
@@ -1994,10 +2048,13 @@ static void draw(unsigned frame){
         /* Keep room for projectiles/HUD and bound 64px OBJ scanline work.
          * Dungeon image slots11/12 still belong exclusively to spells. */
         if(game.area?sprite_slot>=13:object_count>=16)break;
-        if(i && (game.enemies[i-1].alive!=1||game_enemy_hidden(&game,i-1)))continue;
+        if(i && game.enemies[i-1].alive!=1)continue;
         Motion *m=&motion[i];int moving=m->elapsed<m->total;
         int x=(m->x>>8)-cam_x,y=(m->y>>8)-cam_y;
+        /* Cheap screen bounds first: game_enemy_hidden is pure, so testing it
+         * only for on-screen actors skips the call for most of the 112. */
         if(x<-32||x>272||y<0||y>208)continue;
+        if(i && game_enemy_hidden(&game,i-1))continue;
         unsigned behind_door=i&&closed_door_monster_hidden((unsigned)i-1);
         if(behind_door&&!infravision_frame){closed_door_skipped++;continue;}
         const uint8_t *base;int count,anim;
@@ -2097,7 +2154,7 @@ static __attribute__((noinline)) void terrain_repeat_row(unsigned row,unsigned c
  * The map, camera, palette and OAM remain old until the following VBlank.
  * This gives large jobs a bounded whole-frame window, without blanking BG0 or
  * waiting forever for the single admission line160. Audio IRQs stay enabled. */
-static UI_FN void frame_repeat_transfer(void){
+THUMB_FN static UI_FN void frame_repeat_transfer(void){
  uint8_t ends[13]={0};
  /* Actual live OAM, not the pending plan. Include every reference to a shared
   * image, and both2KiB halves of an8bpp corpse. No affine world images exist. */
@@ -2216,6 +2273,7 @@ static UI_FN unsigned finale_visual_refresh(unsigned old_level,unsigned old_flag
 typedef struct {
  unsigned pending,frame,animation_frame,timer_last,cycle_remainder;
  unsigned entry_voice,entry_delay;
+ uint16_t commit_clock; /* Timer0 tick of the last commit (main loop only) */
 } FrameState;
 /* Town dialogue runs only on an interaction, so keep it outside the hot
  * IWRAM frame loop. Preserve talk/shop/heal/quest side-effect order. */
@@ -2230,8 +2288,9 @@ static UI_FN unsigned singleplayer_talk_npc(void){
     dialogue_open((unsigned)n,(unsigned)q,wounded_first);return 1;
 }
 /* Preserve the existing hot loop's IWRAM placement; no .text.ui attribute. */
-static UI_FN void singleplayer_run_frame(unsigned held,unsigned pressed,unsigned elapsed,FrameState *state){
+THUMB_FN static UI_FN void singleplayer_run_frame(unsigned held,unsigned pressed,unsigned elapsed,FrameState *state){
     if(menu_mode){
+        actor_revision++;
         quick_mode=0;quick_blocked&=held;
         state->pending=0;menu_input(pressed,&state->animation_frame);quick_blocked|=held;
         if(quick_mode)quick_draw();else if(!menu_mode)draw(state->animation_frame);
@@ -2240,12 +2299,14 @@ static UI_FN void singleplayer_run_frame(unsigned held,unsigned pressed,unsigned
     }
     unsigned popup_input=quick_input(held,pressed);
     if(popup_input){
+        actor_revision++;
         state->pending=0;
         if(quick_mode)quick_draw();else if(menu_mode)menu_draw();else draw(state->animation_frame);
         state->timer_last=audio_game_clock();state->cycle_remainder=0;graphics_frames++;return;
     }
     held&=~quick_blocked;pressed&=~quick_blocked;
     if(menu_mode){
+        actor_revision++;
         state->pending=0;menu_input(pressed,&state->animation_frame);quick_blocked|=held;
         state->timer_last=audio_game_clock();state->cycle_remainder=0;graphics_frames++;return;
     }
@@ -2254,6 +2315,7 @@ static UI_FN void singleplayer_run_frame(unsigned held,unsigned pressed,unsigned
     state->pending|=pressed&~(KEY_SELECT|KEY_START);
     for(unsigned step=0;step<elapsed;step++){
     if(state->frame%3==0){
+        actor_revision++;
         int ox=game.x,oy=game.y,old_hp=game.hp;uint8_t ex[MAX_ENEMIES],ey[MAX_ENEMIES];int16_t old_enemy_hp[MAX_ENEMIES];uint8_t alive[MAX_ENEMIES],old_attack[MAX_ENEMIES];
         for(int i=0;i<MAX_ENEMIES;i++){ex[i]=game.enemies[i].x;ey[i]=game.enemies[i].y;alive[i]=game.enemies[i].alive;old_enemy_hp[i]=game.enemies[i].hp;old_attack[i]=game.enemy_attack[i];}
         unsigned old_area=game.area,old_level=dungeon_level,old_hero_level=hero_progress.level,old_valor=quest_progress.stage[dungeon_level==7?8:9],old_veil=quest_progress.stage[4]&63,old_banner=quest_progress.stage[7],old_king=quest_progress.king_gates,old_water=quest_progress.state[13],old_finale=quest_progress.finale_flags,old_laz=quest_progress.stage[15],old_won=game.won;unsigned action=state->pending;
@@ -2333,7 +2395,16 @@ UI_FN int main(void){
     state.timer_last=audio_game_clock();
     for(;;){
         if(menu_mode==5){state.entry_delay=0;quick_mode=quick_blocked=0;frontend_enter(&state.animation_frame,0);prev=(~R16(0x04000130))&1023;state.pending=0;state.timer_last=audio_game_clock();state.cycle_remainder=0;}
-        while(R16(0x04000006)>=160){}while(R16(0x04000006)<160){}
+        /* A frame that became ready inside VBlank, early enough for the fast
+         * commit path (frame_deadline), is published in this VBlank instead
+         * of waiting out the rest of it and a whole visible frame. Two
+         * commits in one VBlank would be < 68 lines (~82 Timer0 ticks) apart. */
+        unsigned vline=R16(0x04000006);
+        if(!((frame_state&1)&&!frame_oversized&&vline>=160&&vline<=frame_deadline&&
+             (uint16_t)(audio_game_clock()-state.commit_clock)>100u)){
+            while(R16(0x04000006)>=160){}while(R16(0x04000006)<160){}
+        }
+        state.commit_clock=(uint16_t)audio_game_clock();
         frame_commit();automap_commit();item_sound_update();audio_update();boss_sound_update();hero_sound_update();
         if(spell_audio_seen!=spell_audio_event){spell_audio_seen=spell_audio_event;audio_spell(spell_audio_seen&255);}
         unsigned now=audio_game_clock();

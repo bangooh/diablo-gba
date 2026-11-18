@@ -1,4 +1,11 @@
-# Diablo GBA — source distribution (0.9.6)
+# Diablo GBA — source distribution (0.9.7)
+
+## Version 0.9.7
+
+Renderer and VBlank scheduling improvements, menu sounds, smoother co-op motion,
+and restored co-op music with a separate item-effect cache.
+See [changes, measurements and validation limits](docs/RELEASE-0.9.7.md).
+
 
 A C-based GBA-specific engine developed with reference to Devilution and
 DevilutionX. Unofficial fan project by Bangoo; not affiliated with Blizzard

@@ -9,7 +9,7 @@ static UI_FN void floor_draw_invalidate(const FloorDraw *d){
  floor_invalidate(d);
  death_sprite_invalidate_rect(d->x,d->y,64,64);
 }
-static UI_FN void floor_list_invalidate(const FloorDraw *out,unsigned n,const FloorDraw *old,unsigned old_n){
+THUMB_FN static UI_FN void floor_list_invalidate(const FloorDraw *out,unsigned n,const FloorDraw *old,unsigned old_n){
  unsigned i=0,j=0;
  while(i<n||j<old_n){
   if(i==n||(j<old_n&&old[j].id<out[i].id)){floor_draw_invalidate(&old[j++]);continue;}
