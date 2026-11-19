@@ -9,6 +9,8 @@
 - Seed both single-player New Game entry paths with the continuously running Timer0, previous campaign seed and session counters instead of relying on the audio Timer3's narrow reload range. Quest combinations may still repeat naturally; difficulty does not force a particular combination.
 - Display V 0.9.7.1 in Standard and EZ4 builds.
 
+Special thanks to @honkytonk-w1d for the detailed report on monster spell damage and attack timing, which helped identify and correct these issues.
+
 ## Validation and limits
 
 Production-code host regressions cover direct versus continuous damage, 0% and 75% resistance, separate four-player fractional carries, acid splash/puddle duration, flame segment creation, lightning segment damage and lifetime, and one cast during the Balrog hold. Source checks cover all six character rows and both seed entry paths. The existing core test suite also passes.

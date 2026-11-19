@@ -36,4 +36,6 @@ jobs:
           fi
           if ! gh release view v0.9.7.1 >/dev/null 2>&1; then
             gh release create v0.9.7.1 --target "$RELEASE_SHA" --title 'Diablo GBA 0.9.7.1' --notes-file docs/RELEASE-0.9.7.1.md --latest
+          else
+            gh release edit v0.9.7.1 --notes-file docs/RELEASE-0.9.7.1.md
           fi
