@@ -1,7 +1,9 @@
 #include "game.h"
 #include "coop.h"
 #include "hazards.h"
+#ifndef HAZARD_ROM
 #define HAZARD_ROM __attribute__((section(".text.ui"),noinline))
+#endif
 /* PM_DoRangeAttack / AddArrow / MI_Arrow adaptation. Positions are Q8 world
  * cells. Four swept samples per20Hz tick prevent thin-wall tunnelling. */
 Arrow game_arrows[MAX_ARROWS];
@@ -113,7 +115,9 @@ int game_monster_cast(Game *g,unsigned enemy,unsigned spell){
  if(g->area||enemy>=MAX_ENEMIES||g->enemies[enemy].alive!=1)return 0;
  if(spell!=SPELL_APOCALYPSE&&spell!=SPELL_FLASH){
   if(!game_monster_arrow(g,enemy))return 0;
-  for(unsigned i=0;i<MAX_ARROWS;i++){Arrow *a=&game_arrows[i];if(a->life==255&&(a->direction&64)&&a->owner==enemy&&!a->fire){a->fire=spell;return 1;}}return 0;
+  for(unsigned i=0;i<MAX_ARROWS;i++){Arrow *a=&game_arrows[i];if(a->life==255&&(a->direction&64)&&a->owner==enemy&&!a->fire){a->fire=spell;
+   if(spell==MONSTER_MISSILE_ACID){a->vx/=2;a->vy/=2;a->life=5*(monster_defs[a->reserved].intelligence+4);}
+   return 1;}}return 0;
  }
  for(unsigned i=0;i<MAX_ARROWS;i++)if(!game_arrows[i].life){const Enemy *e=&g->enemies[enemy];int x=spell==SPELL_FLASH?e->x:g->x,y=spell==SPELL_FLASH?e->y:g->y;
   /* Native AddFlash stores 2*mLevel in Q6; Flash2 keeps its initial4 Q6.
@@ -155,15 +159,23 @@ static HAZARD_ROM int hostile_hit(Game *g,Arrow *a,int x,int y){
  }
  if(a->owner>=MAX_ENEMIES||a->reserved>=MONSTER_TYPES)return 0;
  int contacts=0;
+ /* Stationary hazards reuse velocity storage for four independent Q6 carries.
+  * Start at63 to retain the port's ceiling convention without rounding every hit. */
+ unsigned continuous=(a->direction&HOSTILE_BURST)&&(a->fire==SPELL_LIGHTNING||a->fire==MONSTER_MISSILE_ACID||a->fire==MONSTER_MISSILE_FLAME);
+ uint32_t fractions=(uint16_t)a->vx|((uint32_t)(uint16_t)a->vy<<16);
  unsigned previous=coop_turn;if(coop_active)coop_capture(g,previous);
  for(unsigned p=0;p<(coop_active?4u:1u);p++){
   if(coop_active){if(!(coop_members&(1u<<p))||coop_players[p].hero.hp<=0||coop_players[p].x!=x||coop_players[p].y!=y)continue;coop_select(g,p);}
   if(g->hp<=0||g->x!=x||g->y!=y)continue;
   unsigned element=!a->fire?0:a->fire==SPELL_FIREBALL||a->fire==SPELL_FIREBOLT||a->fire==MONSTER_MISSILE_MAGMA||a->fire==MONSTER_MISSILE_FLAME?2:a->fire==SPELL_LIGHTNING?3:1;
-  contacts+=hazard_player(g,a->reserved,0,!a->fire,element,0,a->damage,a->damage,dist,a->start_x,a->start_y,&bow_rng);
+  unsigned remainder=(fractions>>(6*p))&63;
+  contacts+=hazard_player_q6(g,a->reserved,0,!a->fire,element,continuous,a->damage,a->damage,dist,a->start_x,a->start_y,&bow_rng,continuous?&remainder:0);
+  fractions=(fractions&~(63u<<(6*p)))|(remainder<<(6*p));
   if(coop_active)coop_capture(g,p);
  }
- if(coop_active)coop_select(g,previous);return contacts;
+ if(coop_active)coop_select(g,previous);
+ if(continuous){a->vx=(int16_t)(uint16_t)fractions;a->vy=(int16_t)(uint16_t)(fractions>>16);}
+ return contacts;
 }
 static HAZARD_ROM int hostile_line(const Game *g,int x,int y,int tx,int ty){
  int dx=absolute(tx-x),dy=absolute(ty-y),sx=(tx>x)-(tx<x),sy=(ty>y)-(ty<y),err=dx-dy;
@@ -182,12 +194,28 @@ static HAZARD_ROM void hostile_burst(Game *g,Arrow *a,int old_x,int old_y){
  }else if(a->direction&HOSTILE_FARROW){
   /* MI_LArrow backs up one complete tick before the MagBlos phase. */
   a->x=old_x;a->y=old_y;a->fire=SPELL_FIREBOLT;
- }else if(a->fire==MONSTER_MISSILE_ACID||a->fire==MONSTER_MISSILE_FLAME){a->last_x=(a->x+128)>>8;a->last_y=(a->y+128)>>8;a->vx=a->vy=0;a->direction|=HOSTILE_BURST;a->life=a->fire==MONSTER_MISSILE_ACID?24:12;return;}else if(a->fire!=SPELL_FIREBOLT&&a->fire!=MONSTER_MISSILE_MAGMA){a->life=0;return;}
+ }else if(a->fire==MONSTER_MISSILE_ACID){
+  a->last_x=(a->x+128)>>8;a->last_y=(a->y+128)>>8;
+  a->vx=-1;a->vy=255;a->direction|=HOSTILE_BURST;
+  /* MI_Acidsplat -> AddAcidpud: eight splash ticks, then a separate
+   * 1/2-Q6 puddle, never the direct projectile's whole-HP attack damage. */
+  a->damage=game_monster_base_level(a->reserved)>=2?2:1;
+  a->lightning=8;a->life=8+40*(monster_defs[a->reserved].intelligence+1)+hazard_roll(&bow_rng,15);return;
+ }else if(a->fire==MONSTER_MISSILE_FLAME){a->life=0;return;}else if(a->fire!=SPELL_FIREBOLT&&a->fire!=MONSTER_MISSILE_MAGMA){a->life=0;return;}
  a->last_x=(a->x+128)>>8;a->last_y=(a->y+128)>>8;a->vx=a->vy=0;a->direction|=HOSTILE_BURST;a->life=9;
  /* MagBlos has10 native frames; this compact impact adapter lasts len-1. */
 }
 static HAZARD_ROM void lightning_segment(const Arrow *controller,int x,int y){
- for(unsigned i=0;i<MAX_ARROWS;i++)if(&game_arrows[i]!=controller&&!game_arrows[i].life){Arrow *a=&game_arrows[i];*a=*controller;a->x=x*256;a->y=y*256;a->last_x=x;a->last_y=y;a->vx=a->vy=0;a->direction|=HOSTILE_BURST;a->life=8;a->lightning=2*a->damage+hazard_roll(&bow_rng,a->damage);return;}
+ for(unsigned i=0;i<MAX_ARROWS;i++)if(&game_arrows[i]!=controller&&!game_arrows[i].life){
+  Arrow *a=&game_arrows[i];*a=*controller;a->x=x*256;a->y=y*256;a->last_x=x;a->last_y=y;
+  a->vx=-1;a->vy=255;a->direction|=HOSTILE_BURST;
+  unsigned flame=a->fire==MONSTER_MISSILE_FLAME;
+  a->life=flame?20+5*controller->lightning:10;
+  unsigned lo=game_monster_damage_bound(a->reserved,0,0),hi=game_monster_damage_bound(a->reserved,0,1);
+  if(a->owner!=HOSTILE_TRAP_OWNER)a->damage=(lo+hazard_roll(&bow_rng,hi-lo+1))*(flame?1:2);
+  else {a->life=8;a->lightning=2*a->damage+hazard_roll(&bow_rng,a->damage);}
+  return;
+ }
 }
 static HAZARD_ROM void hostile_flash(Game *g,Arrow *a){
  if(a->reserved>=MONSTER_TYPES)return;
@@ -213,6 +241,7 @@ void game_arrows_step(Game *g){
  for(int i=0;i<MAX_ARROWS;i++){
   Arrow *a=&game_arrows[i];if(!a->life||(a->direction&128))continue;
   if((a->direction&(HOSTILE_PROJECTILE|HOSTILE_BURST))==(HOSTILE_PROJECTILE|HOSTILE_BURST)){
+   if(a->fire==MONSTER_MISSILE_ACID&&a->lightning){--a->lightning;--a->life;continue;}
    if((a->direction&HOSTILE_FARROW)||a->fire==SPELL_LIGHTNING||a->fire==MONSTER_MISSILE_ACID||a->fire==MONSTER_MISSILE_FLAME)hostile_hit(g,a,a->last_x,a->last_y);
    --a->life;continue;
   }
@@ -241,7 +270,12 @@ void game_arrows_step(Game *g){
    }
    a->last_x=x;a->last_y=y;
    if(hostile){
-    if(a->fire==SPELL_LIGHTNING&&!(a->direction&HOSTILE_BURST)){lightning_segment(a,x,y);continue;}
+    if((a->fire==SPELL_LIGHTNING||a->fire==MONSTER_MISSILE_FLAME)&&!(a->direction&HOSTILE_BURST)){
+     lightning_segment(a,x,y);
+     /* MI_Flamec stops after three cells; its controller never hits directly. */
+     if(a->fire==MONSTER_MISSILE_FLAME&&++a->lightning==3){a->life=0;impact=1;}
+     continue;
+    }
     if(hostile_hit(g,a,x,y)&&!(a->owner==HOSTILE_TRAP_OWNER&&a->reserved==GAME_TRAP_NOVA)){impact=1;a->life=0;}
     continue;
    }

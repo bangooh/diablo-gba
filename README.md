@@ -1,10 +1,11 @@
-# Diablo GBA — source distribution (0.9.7)
+# Diablo GBA — source distribution (0.9.7.1)
 
-## Version 0.9.7
+## Version 0.9.7.1
 
-Renderer and VBlank scheduling improvements, menu sounds, smoother co-op motion,
-and restored co-op music with a separate item-effect cache.
-See [changes, measurements and validation limits](docs/RELEASE-0.9.7.md).
+Fix monster continuous spell damage and Balrog attack timing, restore the missing
+lightning-resistance row, and improve new-game quest seed variation.
+See [fixes and validation limits](docs/RELEASE-0.9.7.1.md).
+Previous [0.9.7 performance and co-op changes](docs/RELEASE-0.9.7.md).
 
 
 A C-based GBA-specific engine developed with reference to Devilution and

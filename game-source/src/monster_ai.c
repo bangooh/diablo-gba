@@ -159,6 +159,11 @@ unsigned game_enemy_special(const Game *g,int i){
   if(rally[i]==2)return frames-(special[i]?(special[i]-1)/rate:0);
   return (special[i]+rate-1)/rate;
  }
+ if(game_monster_ai(g->enemies[i].kind)==MONSTER_AI_MEGA&&special[i]){
+  unsigned frames=monster71_special_frames[g->enemies[i].kind];
+  unsigned impact=frames-monster71_special_impact[g->enemies[i].kind];
+  return special[i]>impact+14?special[i]-14:special[i]>=impact?impact:special[i];
+ }
  return special[i];
 }
 unsigned game_fallen_retreat(int i){return retreat[i];}
@@ -707,7 +712,7 @@ void game_monsters_step(Game *g){
             else g->enemy_attack[i]=game_monster_attack_ticks(e->kind);continue;
         }
         if(!sneak(e->kind)&&!counselor(e->kind)&&game_monster_ai(e->kind)!=MONSTER_AI_GARG&&rally[i])--rally[i];
-        if(special[i]){--special[i];if(completion_ranged(e->kind)&&delayed[i]==3&&special[i]==monster71_special_frames[e->kind]-monster71_special_impact[e->kind]){game_monster_cast(g,i,completion_spell(e->kind));delayed[i]=0;}if((sneak(e->kind)||counselor(e->kind))&&!special[i])rally[i]=(rally[i]==SNEAK_FADE_OUT||rally[i]==COUNSEL_FADE_OUT)?SNEAK_HIDDEN:SNEAK_VISIBLE;if(e->kind==MONSTER_DIABLO&&special[i]==5)game_monster_cast(g,i,SPELL_APOCALYPSE);continue;}
+        if(special[i]){--special[i];if(completion_ranged(e->kind)&&delayed[i]==3&&game_enemy_special(g,i)==monster71_special_frames[e->kind]-monster71_special_impact[e->kind]){game_monster_cast(g,i,completion_spell(e->kind));delayed[i]=0;}if((sneak(e->kind)||counselor(e->kind))&&!special[i])rally[i]=(rally[i]==SNEAK_FADE_OUT||rally[i]==COUNSEL_FADE_OUT)?SNEAK_HIDDEN:SNEAK_VISIBLE;if(e->kind==MONSTER_DIABLO&&special[i]==5)game_monster_cast(g,i,SPELL_APOCALYPSE);continue;}
         if(walk[i]){idle[i]=0;--walk[i];continue;} /* Finish the visual step before attack/turn. */
         if(g->enemy_attack[i]){
             idle[i]=0;--g->enemy_attack[i];

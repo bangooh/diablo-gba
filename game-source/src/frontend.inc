@@ -287,7 +287,7 @@ static UI_FN void frontend_enter(unsigned *animation,int opening){
   game_ai_reset();
   game_unique_restore(&game);
  }else{
-  game_set_difficulty(new_difficulty);game_seed_next((uint32_t)R16(0x0400010c)*2654435761u);
+  game_set_difficulty(new_difficulty);game_seed_next(item_seed(campaign_seed ^ (uint32_t)R16(0x04000100)*2654435761u ^ graphics_frames*2246822519u ^ (uint32_t)game.ticks));
   if(action>=3){for(unsigned i=0;i<MONSTER_HISTORY_TYPES;i++)monster_history[i]=0;game_create_hero(&hero,action-3);game_new_campaign(&game,&hero);}
   else if(valid){for(unsigned i=0;i<MONSTER_HISTORY_TYPES;i++)monster_history[i]=saved_history(i);game_new_campaign(&game,&hero);}else{game_init(&game);game_enter_town(&game,1);}
   *animation=0;

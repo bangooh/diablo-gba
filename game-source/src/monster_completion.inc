@@ -2,7 +2,7 @@
  * bounded GBA actor clocks. No additional per-actor allocation or full map scan. */
 static int completion_ranged(unsigned kind){unsigned a=game_monster_ai(kind);return a==MONSTER_AI_ACID||a==MONSTER_AI_ACIDUNIQ||a==MONSTER_AI_MAGMA||a==MONSTER_AI_STORM||a==MONSTER_AI_MEGA;}
 static unsigned completion_spell(unsigned kind){unsigned a=game_monster_ai(kind);return a==MONSTER_AI_STORM?SPELL_LIGHTNING:a==MONSTER_AI_MAGMA?MONSTER_MISSILE_MAGMA:a==MONSTER_AI_MEGA?MONSTER_MISSILE_FLAME:MONSTER_MISSILE_ACID;}
-static void completion_shoot(Game *g,int i){unsigned n=monster71_special_frames[g->enemies[i].kind];special[i]=n?n:8;delayed[i]=3;g->enemy_facing[i]=facing(g->x-g->enemies[i].x,g->y-g->enemies[i].y);}
+static void completion_shoot(Game *g,int i){unsigned n=monster71_special_frames[g->enemies[i].kind];special[i]=(n?n:8)+(game_monster_ai(g->enemies[i].kind)==MONSTER_AI_MEGA?14:0);delayed[i]=3;g->enemy_facing[i]=facing(g->x-g->enemies[i].x,g->y-g->enemies[i].y);}
 static AI_ROM void completion_ranged_think(Game *g,int i,int sight,int adjacent,int dx,int dy,unsigned intelligence){
  Enemy *e=&g->enemies[i];if(!seen[i])return;
  unsigned a=game_monster_ai(e->kind),distance=abs_i(dx)>abs_i(dy)?abs_i(dx):abs_i(dy),roll=random_n(10000),less=a==MONSTER_AI_ACID;

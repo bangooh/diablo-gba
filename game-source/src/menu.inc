@@ -464,7 +464,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
                 if(session_hero)game_get_character(&game,&hero);
                 else if(save_read()){hero=save_buffer.hero;gamma_level=save_buffer.gamma;options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);}
                 else{menu_mode=4;menu_notice="NO VALID HERO";menu_draw();return;}
-                game_seed_next((uint32_t)R16(0x0400010C) ^ graphics_frames*2654435761u ^ (uint32_t)game.ticks*2246822519u);
+                game_seed_next(item_seed(campaign_seed ^ (uint32_t)R16(0x04000100)*2654435761u ^ graphics_frames*2246822519u ^ (uint32_t)game.ticks));
                 game_set_difficulty(new_difficulty);game_new_campaign(&game,&hero);active_game=session_hero=1;
                 *animation=0;menu_reload(*animation);
                 if(region_error){region_error=0;active_game=session_hero=0;menu_mode=4;menu_notice="NEW MAP NOT SAVED";menu_draw();return;}

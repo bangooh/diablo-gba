@@ -54,3 +54,5 @@ with tempfile.TemporaryDirectory() as d:
                  '-I',str(r/'game-source/src'),str(r/'tests/test_codecs.c'),
                  str(r/'game-source/src/lz.c'),'-o',str(exe)],check=True)
  subprocess.run([str(exe)],check=True)
+
+subprocess.run([sys.executable, str(r/"tests/test_release_regressions.py")], check=True)

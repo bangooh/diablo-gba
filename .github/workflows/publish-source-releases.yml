@@ -1,0 +1,39 @@
+name: Publish 0.9.7 source releases
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-source-releases.yml'
+      - 'docs/RELEASE-0.9.7.1.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: source-releases-097
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check_public_tree.py --tracked
+      - run: python scripts/test_core.py
+      - name: Publish missing historical and current source releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view v0.9.7 >/dev/null 2>&1; then
+            gh release create v0.9.7 --target 14e72c46bb44d7ed54e5bd44d3b97dfb2a113046 --title 'Diablo GBA 0.9.7' --notes-file docs/RELEASE-0.9.7.md --latest=false
+          fi
+          if ! gh release view v0.9.7.1 >/dev/null 2>&1; then
+            gh release create v0.9.7.1 --target "$RELEASE_SHA" --title 'Diablo GBA 0.9.7.1' --notes-file docs/RELEASE-0.9.7.1.md --latest
+          fi

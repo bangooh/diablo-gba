@@ -226,7 +226,7 @@ static UI_FN __attribute__((minsize)) void status_draw(const CharacterState *h,u
   quick_text(p,top,19,136,"Mana",white,1);status_value(p,top,51,133,62,mana,white,gold);
   const char *right[]={"Armor class","To hit","Damage","Resist magic","Resist fire","Resist light"};
   const char *rv[]={armor,aim,damage,resist[0],resist[1],resist[2]};
-  for(unsigned i=0;i<5;i++){unsigned y=72+i*13;quick_text(p,top,124,y,right[i],white,1);status_value(p,top,175,y-2,46,rv[i],white,gold);}
+  for(unsigned i=0;i<sizeof(right)/sizeof(right[0]);i++){unsigned y=72+i*13;quick_text(p,top,124,y,right[i],white,1);status_value(p,top,175,y-2,46,rv[i],white,gold);}
   panel_stage(row);
  }
  panel_publish();

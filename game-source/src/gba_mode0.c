@@ -1792,7 +1792,7 @@ THUMB_FN static UI_FN void draw_spell_effects(unsigned frame){
    unsigned spell=(a->direction&64)?a->fire:0;
    unsigned visual=spell?spell:((a->direction&(HOSTILE_PROJECTILE|HOSTILE_FARROW))==(HOSTILE_PROJECTILE|HOSTILE_FARROW)?SPELL_FIREBOLT:a->fire?1:a->lightning?3:0);
    int wx,wy;projectile_world(a,spell,&wx,&wy);if(wx<cam_x-32||wx>cam_x+272||wy<cam_y-16||wy>cam_y+208)continue;
-   unsigned cls=visual==MONSTER_MISSILE_ACID?((a->direction&HOSTILE_BURST)?48:23+(a->direction&15)):visual==MONSTER_MISSILE_MAGMA?39+((a->direction&15)/2):spell_art_class(visual,a->vx,a->vy);
+   unsigned cls=visual==MONSTER_MISSILE_ACID?((a->direction&HOSTILE_BURST)?48:23+(a->direction&15)):visual==MONSTER_MISSILE_MAGMA?39+((a->direction&15)/2):spell_art_class(visual,(a->direction&HOSTILE_BURST)?0:a->vx,(a->direction&HOSTILE_BURST)?0:a->vy);
    arrows[i]=visual?spell_image(cls,frame):0xf000|(a->direction&15);effect_plan_add(&plan,arrows[i]);
   }
   if(game_spell_bolts_active())for(unsigned i=0;i<MAX_SPELL_BOLTS;i++){
