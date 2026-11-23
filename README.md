@@ -18,6 +18,18 @@ scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
 
+## Version 0.9.7.1
+
+Fix monster continuous spell damage and Balrog attack timing, restore the missing
+lightning-resistance row, and improve new-game quest seed variation.
+See [fixes and validation limits](docs/RELEASE-0.9.7.1.md).
+
+## Version 0.9.7
+
+Renderer and VBlank scheduling improvements, menu sounds, smoother co-op motion,
+and restored co-op music with a separate item-effect cache.
+See [changes, measurements and validation limits](docs/RELEASE-0.9.7.md).
+
 ## Version 0.9.6
 
 ROM-resident simulation modules now use Thumb/O2. Matched mGBA tests show

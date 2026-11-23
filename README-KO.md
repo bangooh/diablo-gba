@@ -20,6 +20,23 @@ The package includes game code, MPQ conversion tools and existing attributed
 are not included. The 7×7 font is stored in 8×8 cells. Existing font attribution
 notices are preserved.
 
+### Version 0.9.7.2
+
+Complete MPQ generation from the public tree restored; hero corruption on
+monster death fixed; lighter minimap and floor-list work.
+See [fixes and validation limits](docs/RELEASE-0.9.7.2.md).
+
+### Version 0.9.7.1
+
+Monster continuous spell damage and Balrog timing corrected; lightning-resistance
+row restored; new-game quest seeds varied.
+See [fixes and validation limits](docs/RELEASE-0.9.7.1.md).
+
+### Version 0.9.7
+
+Renderer/VBlank optimization, menu sounds, co-op motion interpolation and co-op
+music restored. See [changes and validation](docs/RELEASE-0.9.7.md).
+
 ### Version 0.9.6
 
 Thumb/O2 simulation optimization; existing offline CPU-party support retained.
@@ -70,7 +87,7 @@ Public repository: https://github.com/bangooh/diablo-gba
 
 ## Korean / 한국어
 
-### Diablo GBA 0.9.6 소스 배포본
+### Diablo GBA 0.9.7.2 소스 배포본
 
 Bangoo의 비공식 팬 프로젝트입니다. Devilution과 DevilutionX를 참고한
 C 기반 GBA 전용 엔진이며 Blizzard 또는 Nintendo의 공식 제품이 아닙니다.
@@ -87,6 +104,19 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 그림이 깨지던 문제를 고치고, 미니맵과 바닥 목록의 프레임당 작업량을
 줄였습니다. 측정 결과와 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.2.md)을
 참고하세요.
+
+### 버전 0.9.7.1
+
+몬스터 번개·화염·산성 지속 피해를 원작의 1/64 HP 단위로 바로잡고, 발록 계열
+특수 공격 타이밍을 복원했습니다. 캐릭터 화면에서 빠져 있던 번개 저항 줄을
+되살리고, 새 게임의 퀘스트 시드가 더 다양하게 나오도록 했습니다.
+수정 내용과 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.1.md)을 참고하세요.
+
+### 버전 0.9.7
+
+렌더링·VBlank 최적화, 메뉴 효과음, 협동 이동 보간과 BGM 복원을 포함합니다.
+사용자 실기·링크 플레이 검증을 완료했습니다.
+측정 결과와 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.md)을 참고하세요.
 
 ### 버전 0.9.6
 
