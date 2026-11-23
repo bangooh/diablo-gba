@@ -139,13 +139,13 @@ THUMB_FN static UI_FN void death_sprite_cached_decode(unsigned frame,uint8_t *ou
   for(unsigned n=0;n<13;n++){unsigned i=(raw_next+n)%13;if(i<12&&!(pinned&(3u<<i))){cached=(int)i;break;}}
   if(cached<0){death_sprite_decode(frame,out,lut);return;}
   d_raw_base[cached]=d_raw_base[cached+1]=0;
-  uint8_t *raw=(uint8_t*)town_map+RAW_DUNGEON_ART+MAP_W*MAP_H*2+(unsigned)cached*2048;
+  uint8_t *raw=(uint8_t*)town_map+DUNGEON_LAYOUT_OFFSET+MAP_W*MAP_H*2+(unsigned)cached*2048;
   death_sprite_decode(frame,raw,lut);
   d_raw_frame[cached]=(int)frame;d_raw_frame[cached+1]=~(int)frame;d_raw_dir[cached]=(int)key;
   d_raw_base[cached]=d_raw_base[cached+1]=asset_floor_decals;raw_next=(cached+2)%13;
  }
  d_raw_ref[slot]=(uint8_t)cached;d_raw_ref[slot+1]=(uint8_t)(cached+1);
- const uint8_t *raw=(uint8_t*)town_map+RAW_DUNGEON_ART+MAP_W*MAP_H*2+(unsigned)cached*2048;
+ const uint8_t *raw=(uint8_t*)town_map+DUNGEON_LAYOUT_OFFSET+MAP_W*MAP_H*2+(unsigned)cached*2048;
  dma(raw,out,2048);dma(raw+2048,out+2048,2048);
 }
 THUMB_FN static UI_FN void death_sprite_mask(uint8_t *pixels,int wx,int wy,int foot,unsigned start){
