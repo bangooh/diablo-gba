@@ -1,11 +1,12 @@
-# Diablo GBA 0.9.7.1 source distribution — English / Korean
+# Diablo GBA 0.9.7.2 source distribution — English / Korean
 
-## Version 0.9.7.1
+## Version 0.9.7.2
 
-Fix monster continuous spell damage and Balrog attack timing, restore the missing
-lightning-resistance row, and improve new-game quest seed variation.
-See [fixes and validation limits](docs/RELEASE-0.9.7.1.md).
-Previous [0.9.7 performance and co-op changes](docs/RELEASE-0.9.7.md).
+Restore complete generation from the public tree (missing `pack_ui_audio.py`,
+host build of `actor_frames.c`), fix the hero sprite corruption whenever a
+monster dies in freshly generated builds, and reduce minimap and floor-list
+work per frame. See [fixes, measurements and limits](docs/RELEASE-0.9.7.2.md).
+Previous [0.9.7.1 monster damage and timing fixes](docs/RELEASE-0.9.7.1.md).
 
 
 ## English
@@ -78,6 +79,14 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 게임 코드, MPQ 변환 도구, 출처가 표시된 기존 3×5·5×5·7×7 폰트 입력을
 포함합니다. 게임 이미지·음원·영상·MPQ·ROM·세이브는 포함하지 않습니다.
 7×7 폰트는 8×8 셀에 저장됩니다. 폰트의 기존 출처 고지는 유지합니다.
+
+### 버전 0.9.7.2
+
+공개 저장소만으로 전체 생성이 멈추던 문제(`pack_ui_audio.py` 누락,
+PC에서 `actor_frames.c` 컴파일 실패)를 고쳤습니다. 새로 생성한 빌드에서
+몬스터가 죽을 때마다 캐릭터 그림이 깨지던 문제를 고치고, 미니맵과 바닥
+목록의 프레임당 작업량을 줄였습니다. 측정과 검증 범위는
+[변경 기록](docs/RELEASE-0.9.7.2.md)을 참고하세요.
 
 ### 버전 0.9.6
 
