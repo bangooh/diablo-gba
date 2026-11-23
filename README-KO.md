@@ -1,11 +1,12 @@
-# Diablo GBA 0.9.7.4 source distribution — English / Korean
+# Diablo GBA 0.9.7.5 source distribution — English / Korean
 
-## Version 0.9.7.4
+## Version 0.9.7.5
 
-Stop stippling wall faces in front of thick wall mass, where the player cannot
-walk behind them, on every dungeon level.
-See [fixes and validation limits](docs/RELEASE-0.9.7.4.md).
-Previous [0.9.7.3 CPU party fixes](docs/RELEASE-0.9.7.3.md).
+Add a 64×64 corner minimap (Options > Minimap: Right, the new default, or
+Center), colour the ending movie, animate the epilogue and restore the 75%
+wall stipple on floors 1–4.
+See [changes and validation limits](docs/RELEASE-0.9.7.5.md).
+Previous [0.9.7.4 wall stipple fix](docs/RELEASE-0.9.7.4.md).
 
 
 ## English
@@ -18,6 +19,13 @@ The package includes game code, MPQ conversion tools and existing attributed
 3×5, 5×5 and 7×7 font inputs. Game artwork, audio, videos, MPQs, ROMs and saves
 are not included. The 7×7 font is stored in 8×8 cells. Existing font attribution
 notices are preserved.
+
+### Version 0.9.7.5
+
+A 64×64 corner minimap (Options > Minimap: Right, default, or Center), a
+coloured ending movie, an animated epilogue and the 75% wall stipple on
+floors 1–4 restored.
+See [changes and validation limits](docs/RELEASE-0.9.7.5.md).
 
 ### Version 0.9.7.4
 
@@ -96,7 +104,7 @@ Public repository: https://github.com/bangooh/diablo-gba
 
 ## Korean / 한국어
 
-### Diablo GBA 0.9.7.4 소스 배포본
+### Diablo GBA 0.9.7.5 소스 배포본
 
 Bangoo의 비공식 팬 프로젝트입니다. Devilution과 DevilutionX를 참고한
 C 기반 GBA 전용 엔진이며 Blizzard 또는 Nintendo의 공식 제품이 아닙니다.
@@ -105,6 +113,14 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 게임 코드, MPQ 변환 도구, 출처가 표시된 기존 3×5·5×5·7×7 폰트 입력을
 포함합니다. 게임 이미지·음원·영상·MPQ·ROM·세이브는 포함하지 않습니다.
 7×7 폰트는 8×8 셀에 저장됩니다. 폰트의 기존 출처 고지는 유지합니다.
+
+### 버전 0.9.7.5
+
+오른쪽 위에 64×64 코너 미니맵을 추가했습니다. 옵션 > Minimap에서 Right(새 기본값)와
+Center(기존 전체 화면 지도)를 고를 수 있습니다. 엔딩 영상을 장면마다 원본 색으로
+칠하고, 엔딩 뒤 정지 화면을 5장 반복 애니메이션(240색)으로 바꿨습니다. 1~4층의
+가림 벽을 0.9.7과 같은 75% 무늬로 되돌렸습니다.
+수정 내용과 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.5.md)을 참고하세요.
 
 ### 버전 0.9.7.4
 

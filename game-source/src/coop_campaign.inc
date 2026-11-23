@@ -261,7 +261,7 @@ static __attribute__((minsize)) int UI_FN coop_campaign_host_save(void){
 static __attribute__((minsize)) int UI_FN coop_campaign_personal_save(const CharacterState *hero){
  int reset=0;if(!save_read()){if(!coop_campaign_can_initialize()||!save_personal_begin(hero,0x83000001u))return 0;reset=1;}
  save_buffer.hero=*hero;if(save_buffer.hero.hp<=0)save_buffer.hero.hp=game_character_max_hp(&save_buffer.hero);capture_history();
- save_buffer.gamma=gamma_level;save_buffer.metadata_padding=options_volume_pack(audio_music_enabled?audio_music_volume:0,audio_effects_volume);save_buffer.metadata_padding3=options_dpad_pack(dpad_rotation);
+ save_buffer.gamma=gamma_level;save_buffer.metadata_padding=options_volume_pack(audio_music_enabled?audio_music_volume:0,audio_effects_volume);save_buffer.metadata_padding3=options_dpad_pack(dpad_rotation,map_layout);
  if(!save_metadata_valid((const SaveMeta*)&save_buffer))return 0;
  if(reset)campaign_initializing=1;int ok=archive_write(0,0,reset);if(ok)campaign_initializing=0;return ok;
 }

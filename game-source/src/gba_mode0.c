@@ -174,7 +174,7 @@ static unsigned hud_transparent=1;
 volatile unsigned hero_occluded_pixels;
 
 static uint16_t base_palette[512] __attribute__((aligned(4)));
-static uint8_t gamma_level=2,death_red_ready,dpad_rotation;
+static uint8_t gamma_level=2,death_red_ready,dpad_rotation,map_layout;
 static void actor_palette_refresh(void);
 static __attribute__((section(".text.ui"),noinline)) void apply_gamma(void){
     for(int i=0;i<512;i++){
@@ -236,6 +236,13 @@ static void automap_prime(void);
 static void automap_blend(void);
 volatile unsigned map_unique_tiles,map_tile_overflows;
 #define UI_FN __attribute__((section(".text.ui"),noinline))
+/* Options: Right is the compact corner map, Center the original full map.
+ * A layout change discards the resident map so the next draw rebuilds it. */
+static UI_FN void map_layout_set(unsigned layout){
+ layout=layout?1u:0u;if(layout==map_layout)return;
+ map_layout=(uint8_t)layout;map_last_x=-1;map_last_area=-1;map_init=1;map_pending=0;
+}
+static inline unsigned map_corner(void){return !map_layout;}
 /* ROM-resident renderer code: the cartridge bus is 16 bits wide, so a Thumb
  * opcode is one fetch and an ARM opcode two. Applied to the measured hot ROM
  * functions whose Thumb build does not push large helpers into IWRAM
@@ -962,12 +969,13 @@ static __attribute__((noinline)) void terrain_piece(uint8_t *pixels,uint8_t *dep
   out[p]=(out[p]&~mask)|v;dst[p]=(dst[p]&~mask)|(zz&mask);
  }
 }
-/* Fully populated checker tiles have a known alpha mask; no per-pixel
- * transparency discovery is needed while the camera exposes new terrain. */
+/* Fully populated75% fixed-wall tiles have a known alpha mask (odd rows lose
+ * odd columns); no per-pixel transparency discovery is needed while the
+ * camera exposes new terrain. */
 static __attribute__((noinline)) void terrain_checker(uint8_t *pixels,uint8_t *depth,const uint8_t *piece,unsigned z){
  uint32_t *out=(uint32_t*)pixels,*dst=(uint32_t*)depth;const uint32_t *src=(const uint32_t*)piece;
  for(unsigned p=0;p<16;p++){
-  unsigned mask=(p&2)?0xff00ff00u:0x00ff00ffu;
+  unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;
   out[p]=(out[p]&~mask)|src[p];dst[p]=(dst[p]&~mask)|(z*0x01010101u&mask);
  }
 }
@@ -1616,8 +1624,10 @@ static UI_FN void automap_camera(void){
   }
  }
 }
+static void mc_scroll(void);
 static UI_FN void automap_scroll(void){
  if(!map_visible||map_init)return;
+ if(map_corner()){mc_scroll();return;}
  if(game.area||map_stream_active){R16(0x04000018)=(uint16_t)((map_ref_x-120)&255);R16(0x0400001a)=(uint16_t)((map_ref_y-80)&255);}
  else {R16(0x04000018)=(uint16_t)(map_origin_x(map_last_x,map_last_y)+map_ref_x-120);R16(0x0400001a)=(uint16_t)(map_origin_y(map_last_x,map_last_y)+map_ref_y-80);}
 }
@@ -1644,8 +1654,10 @@ static UI_FN void automap_commit(void){
     map_pending=0;map_commits++;
     if(before<160||R16(0x04000006)<160)map_commit_overruns++;
 }
+static void mc_markers(void);
 static UI_FN void automap_arrow(void){
     if(!map_visible||map_init)return;
+    if(map_corner()){mc_markers();return;}
     int bottom=(int)automap_bottom();
     if(coop_active){
      for(unsigned i=0;i<4;i++)if(coop_members&(1u<<i)){
@@ -1669,12 +1681,13 @@ static UI_FN void automap_arrow(void){
 }
 #include "automap_raster.inc"
 #include "automap_stream.inc"
+#include "automap_corner.inc"
 #include "automap_cached.inc"
 static UI_FN void automap_draw(void){
  if(!map_visible)return;
  /* Use bounded ring jobs for every dungeon. A moving wide-cache rebuild
   * previously stalled this draw for about 100ms on explored L1 saves. */
- if(map_last_x==-1)map_stream_active=1;
+ if(map_last_x==-1||map_corner())map_stream_active=1;
  if(game.area||map_stream_active)automap_stream_draw();else automap_cached_draw();
 }
 static UI_FN void invalidate_prop(int i){

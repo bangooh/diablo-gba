@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile Diablo GBA 0.9.7.4 with the archived production build recipe.
+"""Compile Diablo GBA 0.9.7.5 with the archived production build recipe.
 
 Never runs asset packers or writes production src/, generated/, or build/.
 Unchanged generated inputs are read directly, and assets.s is emitted privately.

@@ -6,7 +6,7 @@
 #define MS_DIRTY (MAP_OUTLINE+1808)
 #define MS_HASH (MAP_REVEALED+1180)
 #define MS_FOG (MAP_REVEALED+1496)
-typedef struct {int16_t x,y;uint16_t cursor,refs,pixels,ready;uint32_t revision;uint16_t used;} MapStream;
+typedef struct {int16_t x,y;uint16_t cursor,refs,pixels,ready;uint32_t revision;uint16_t used;uint8_t corner;} MapStream;
 #define MS ((MapStream*)(MAP_OUTLINE+1936))
 _Static_assert(1936+sizeof(MapStream)<=2048,"stream state exceeds outline tail");
 _Static_assert(1496+200<=1800,"stream fog exceeds edge tail");
@@ -40,6 +40,7 @@ static inline uint32_t ms_flip_x(uint32_t v){
  v=((v>>2)&0x33333333u)|((v&0x33333333u)<<2);
  return ((v>>4)&0x0f0f0f0fu)|((v&0x0f0f0f0fu)<<4);
 }
+static UI_FN unsigned ms_pack(uint32_t words[2],uint32_t out[8],unsigned flips);
 static UI_FN unsigned ms_pixels(int tx,int ty,uint32_t out[8]){
  uint32_t words[2]={0,0};uint8_t *bits=(uint8_t*)words;
  if(game.area){int x=tx+44,y=ty+1;if(x>=0&&x<TOWN_MAP80_W&&y>=0&&y<TOWN_MAP80_H){unsigned n=town_map80_refs[!!game_wounded_present()][y*TOWN_MAP80_W+x];words[0]=town_map80_tiles[n][0];words[1]=town_map80_tiles[n][1];}}
@@ -70,8 +71,13 @@ static UI_FN unsigned ms_pixels(int tx,int ty,uint32_t out[8]){
    }
   }
  }
+ return ms_pack(words,out,!game.area);
+}
+/* Choose the smallest of the four flips, then expand1bpp to the map ink. */
+static UI_FN unsigned ms_pack(uint32_t words[2],uint32_t out[8],unsigned flips){
+ const uint8_t *bits=(const uint8_t*)words;
  unsigned flip=0;uint32_t a=words[0],b=words[1],oa=a,ob=b;
- for(unsigned f=1;!game.area&&f<4;f++){
+ for(unsigned f=1;flips&&f<4;f++){
   uint32_t h=f&1?ms_flip_x(oa):oa,j=f&1?ms_flip_x(ob):ob;
   if(f&2){uint32_t old=h;h=__builtin_bswap32(j);j=__builtin_bswap32(old);}
   if(h<a||(h==a&&j<b)){a=h;b=j;flip=f<<10;}
@@ -114,7 +120,10 @@ static UI_FN void ms_reveal(void){
   MS_FOG[i]=fog[i];
  }
 }
+static void mc_draw(void);
+static void mc_commit(void);
 static UI_FN void automap_stream_draw(void){
+ if(map_corner()){mc_draw();return;}
  if(!map_visible||map_pending)return;
  ms_camera();int nx=ms_floor(map_ref_x-120,8)-1,ny=ms_floor(map_ref_y-80,8)-2;
  /* Keep the resident window until its margin is consumed. In particular,
@@ -131,7 +140,7 @@ static UI_FN void automap_stream_draw(void){
   if(!game.area)automap_build_outline();MS->revision=revision;for(unsigned n=0;n<309;n++){MS_REFS[n]=0;MS_HASH[n]=0;}
   for(unsigned n=0;n<128;n++)MS_DIRTY[n]=0;
   for(unsigned n=0;n<200;n++)MS_FOG[n]=0;
-  MS->x=(int16_t)nx;MS->y=(int16_t)ny;MS->cursor=MS->refs=MS->pixels=MS->ready=0;MS->used=1;
+  MS->x=(int16_t)nx;MS->y=(int16_t)ny;MS->cursor=MS->refs=MS->pixels=MS->ready=0;MS->used=1;MS->corner=0;
   for(int y=ny;y<ny+24;y++)for(int x=nx;x<nx+32;x++)ms_dirty(((y&31)<<5)|(x&31));
   map_last_x=game.x;map_last_y=game.y;map_last_area=game.area;map_screen_fallback=map_screen_live=0;map_init=1;map_pending=3;return;
  }
@@ -196,7 +205,9 @@ static UI_FN void automap_stream_commit(void){
   uint32_t blank=(ms_tile(0)|((map_line_color>>4)<<12));blank|=blank<<16;
   for(unsigned i=0;i<512;i++)R16(0x0600e800u+i*4)=blank&65535,R16(0x0600e802u+i*4)=blank>>16;
   for(unsigned i=0;i<8;i++)R16(0x06008000u+ms_tile(0)*32+i*4)=0,R16(0x06008002u+ms_tile(0)*32+i*4)=0;
- }else{
+  if(map_corner())mc_commit();
+ }else if(map_corner())mc_commit();
+ else{
   for(unsigned j=0;j<MS->pixels;j++)dma(MB->pixels[j],(void*)(0x06008000u+ms_tile(MB->slot[j])*32),32);
   for(unsigned j=0;j<MS->refs;j++)R16(0x0600e800u+MB->at[j]*2)=MB->value[j];
   if(MS->ready==1)map_init=0;

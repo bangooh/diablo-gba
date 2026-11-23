@@ -1,11 +1,17 @@
-"""Pack all-class Sorcerer ending:240x117,5FPS,16 fixed red shades.
+"""Pack all-class Sorcerer ending:240x117,5FPS,16 shades tinted per frame.
 
 Normal invocation regenerates the selected ED49 key/XOR-delta stream from the
 preserved native5FPS gray source. --check validates existing assets against
 that source through the production C helper and decoder, without recompressing.
 --smk can recreate the preserved source from the original DiabVic1.smk.
---palette-only updates the red palette/header/report while retaining the
+--palette-only updates the tint palettes/header/report while retaining the
 existing compressed video and source files without rewriting or reencoding.
+
+Colour: the video stays 16 gray levels. Each frame gets its own 16-colour
+palette: entry k is the mean original colour of the pixels at gray level k
+(gaps interpolated, 1-2-1 temporal smoothing, entry0 black). The palettes
+are measured from the original DiabVic1.smk colours and kept beside the
+preserved gray source, so --check needs no movie.
 """
 from pathlib import Path
 import argparse
@@ -19,7 +25,7 @@ import tempfile
 
 import numpy as np
 from PIL import Image
-from stage49_pack_sorcerer import source_frames, compress_pair, delta_container
+from stage49_pack_sorcerer import SOURCE, source_frames, compress_pair, delta_container
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'generated'
@@ -39,20 +45,49 @@ def packed_source(frames):
     return indices[:, ::2] | (indices[:, 1::2] << 4)
 
 
-def red_palette():
-    # Preserve the original sixteen red-channel intensities; remove the orange
-    # cast with only a little green/blue in the highest red highlights.
-    colors = []
-    for i in range(16):
-        red = (i*31+7)//15
-        green, blue = (red*2+15)//31, (red+15)//31
-        colors.append(red | (green << 5) | (blue << 10))
-    channels = [(c & 31, (c >> 5) & 31, (c >> 10) & 31) for c in colors]
-    assert colors[0] == 0 and len(set(colors)) == 16
-    assert all(a[0] < b[0] and a[1] <= b[1] and a[2] <= b[2]
-               for a, b in zip(channels, channels[1:]))
-    assert channels[-1] == (31, 2, 1)
-    return colors
+TINT_CACHE = SOURCE / 'tint-palettes-5fps.npy'
+
+
+def tint_palettes(smk, packed):
+    """Per-frame RGB555 palettes for the 16 gray levels (see module notes)."""
+    if not smk:
+        assert TINT_CACHE.exists(), 'First run needs --smk /path/to/DiabVic1.smk'
+        tint = np.load(TINT_CACHE)
+        assert tint.shape == (FRAMES, 16) and tint.dtype == np.uint16
+        return tint
+    raw = subprocess.check_output(['ffmpeg', '-v', 'error', '-i', str(smk), '-an', '-vf', 'fps=5',
+                                   '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'])
+    native = np.frombuffer(raw, dtype=np.uint8).reshape(-1, 156, 320, 3)
+    assert len(native) == FRAMES
+    levels = np.empty((FRAMES, WIDTH*HEIGHT), np.uint8)
+    levels[:, ::2], levels[:, 1::2] = packed & 15, packed >> 4
+    means = np.zeros((FRAMES, 16, 3))
+    for n, frame in enumerate(native):
+        rgb = np.asarray(Image.fromarray(frame).resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS),
+                         dtype=np.float64).reshape(-1, 3)
+        known = [0]
+        for k in range(1, 16):
+            mask = levels[n] == k
+            if mask.sum() >= 20:
+                means[n, k] = rgb[mask].mean(0)
+                known.append(k)
+        for k in range(1, 16):
+            if k in known:
+                continue
+            low = max(j for j in known if j < k)
+            high = [j for j in known if j > k]
+            if high:
+                t = (k-low)/(high[0]-low)
+                means[n, k] = means[n, low]*(1-t) + means[n, high[0]]*t
+            else:
+                means[n, k] = means[n, low] + (k-low)*np.array([12.0, 9.0, 6.0])
+    smooth = means.copy()
+    smooth[1:-1] = (means[:-2] + 2*means[1:-1] + means[2:]) / 4
+    five = np.round(np.clip(smooth, 0, 255)*31/255).astype(np.uint16)
+    tint = five[..., 0] | (five[..., 1] << 5) | (five[..., 2] << 10)
+    tint[:, 0] = 0
+    np.save(TINT_CACHE, tint)
+    return tint
 
 
 def header_text():
@@ -69,7 +104,7 @@ def header_text():
             '#define ENDING_VIDEO_DELTA_FLAG 0x80000000u\n'
             '#define ENDING_VIDEO_OFFSET_MASK 0x7fffffffu\n'
             'extern const uint8_t asset_ending_video[];\n'
-            '/* Raw16 RGB555 red shades; index0 is black. */\n'
+            '/* Raw RGB555, 16 colours per frame in frame order; index0 is black. */\n'
             'extern const uint8_t asset_ending_video_palette[];\n')
 
 
@@ -124,8 +159,8 @@ def main():
     parser.add_argument('--workers', type=int, default=4)
     args = parser.parse_args()
     assert not (args.check and args.reuse_prototype)
-    if args.palette_only and (args.check or args.reuse_prototype or args.smk):
-        parser.error('--palette-only retains existing video/source; do not combine it with other modes')
+    if args.palette_only and (args.check or args.reuse_prototype):
+        parser.error('--palette-only retains existing video; do not combine it with --check or --reuse-prototype')
     if args.check and args.smk:
         parser.error('--check reads the preserved source; use --smk separately to regenerate it')
     if args.smk:
@@ -144,9 +179,9 @@ def main():
         with concurrent.futures.ProcessPoolExecutor(max_workers=args.workers) as pool:
             compressed = list(pool.map(compress_pair, zip(raw, (row.tobytes() for row in delta)), chunksize=4))
         blob, _ = delta_container(raw, compressed, WIDTH, HEIGHT, BITS)
-    colors = red_palette()
-    palette = struct.pack('<16H', *colors)
-    assert colors[0] == 0 and len(set(colors)) == 16
+    tint = tint_palettes(args.smk, packed)
+    palette = tint.astype('<u2').tobytes()
+    assert len(palette) == FRAMES*32 and not tint[:, 0].any()
     # The C helper includes the header, so write it before compiling validation.
     header = header_text().encode()
     if args.check:
@@ -159,9 +194,8 @@ def main():
               'source_gray_5fps_sha256': source['native_gray_sha256'],
               'width': WIDTH, 'height': HEIGHT, 'top': 21, 'fps': FPS, 'frames': FRAMES,
               'bits_per_pixel': BITS, 'colors': 16, 'palette_zero_is_black': True,
-              'palette_tone': 'red', 'palette_maximum_rgb555_channels': [31, 2, 1],
-              'palette_channels_monotonic': True, 'palette_colors_distinct': 16,
-              'palette_red_channel_ramp_unchanged': True,
+              'palette_tone': 'per-frame tint: mean original colour of each gray level',
+              'palettes': FRAMES,
               'video_bytes': len(blob), 'palette_bytes': len(palette),
               'aligned_rom_asset_bytes': ((len(blob)+3)&~3)+len(palette),
               'packed_frame_bytes': PACKED_BYTES, 'decoded_frames_sha256': sha(packed.tobytes()),
@@ -179,7 +213,7 @@ def main():
             assert (OUT / name).read_bytes() == data, 'Palette edit changed video bytes'
         else:
             (OUT / name).write_bytes(data)
-    print(f'PASS: Sorcerer ending373 frames,240x117,5FPS,16 red shades; '
+    print(f'PASS: Sorcerer ending373 frames,240x117,5FPS,16 tinted shades per frame; '
           f'{report["aligned_rom_asset_bytes"]} aligned ROM bytes; all frames validated through production C helper')
 
 

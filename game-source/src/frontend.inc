@@ -274,7 +274,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) unsigned frontend_run(int 
 static UI_FN void frontend_enter(unsigned *animation,int opening){
  /* Restore personal settings once at cold boot, including before NEW GAME
   * keeps/replaces a hero. Returning to the title retains live option edits. */
- if(opening&&save_read()){gamma_level=save_buffer.gamma;options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);}
+ if(opening&&save_read()){gamma_level=save_buffer.gamma;options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);map_layout_set(options_map_unpack(save_buffer.metadata_padding3));}
  retry_frontend:
  audio_stop();unsigned action=frontend_run(opening);audio_stop();front_sound_stop();
  if(action==100){coop_enter();*animation=0;return;}

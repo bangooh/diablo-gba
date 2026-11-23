@@ -1,6 +1,12 @@
-"""Pack the three supplied epilogue stills, preserving their supplied order.
+"""Pack the common epilogue: a five-frame ping-pong loop and "The End".
 
-The original PNGs are the rebuild sources. No movie extraction is required.
+Sources are native Diabend.smk frames extracted by prepare_mpq_presentation:
+loop0..loop4 (frames 147..159, 5FPS spacing) and final (frame 824).
+
+The loop shares one 240-colour palette (Mode4 entries 16..255). Chunk 0 is
+the first loop canvas; chunks 1..4 XOR one canvas into the next, so the same
+delta also steps back and the ping-pong costs four deltas. Chunk 5 is the
+final still with its own 240 colours. All chunks are 240x160 Mode4 canvases.
 """
 from pathlib import Path
 import argparse
@@ -14,53 +20,96 @@ from lz77 import compress, decompress, indexed_chunks
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'generated'
 SOURCE = ROOT / 'source_assets/ending/common-stage49'
-COLORS, BASE = 64, 16
+COLORS, BASE, LOOP = 240, 16, 5
+
+
+def scaled(name):
+    original = Image.open(SOURCE / f'{name}.png').convert('RGB')
+    return original, ImageOps.contain(original, (240, 120), Image.Resampling.LANCZOS)
+
+
+def canvas_of(indexed):
+    x, y = (240 - indexed.width) // 2, (160 - indexed.height) // 2
+    canvas = bytearray(240 * 160)
+    indices = indexed.tobytes()
+    for line in range(indexed.height):
+        start = (y + line) * 240 + x
+        canvas[start:start + indexed.width] = bytes(BASE + v for v in
+            indices[line * indexed.width:(line + 1) * indexed.width])
+    return canvas, [x, y]
+
+
+def rgb555(quantized):
+    palette = quantized.getpalette()[:3 * COLORS]
+    palette += [0] * (3 * COLORS - len(palette))
+    return [(palette[3*i] >> 3) | (palette[3*i+1] >> 3) << 5 | (palette[3*i+2] >> 3) << 10
+            for i in range(COLORS)]
+
+
+def preview(canvas, colors):
+    rgb_palette = [0] * 768
+    for i, c in enumerate(colors, BASE):
+        rgb_palette[i*3:i*3+3] = [(c & 31) * 255 // 31, ((c >> 5) & 31) * 255 // 31,
+                                  ((c >> 10) & 31) * 255 // 31]
+    image = Image.frombytes('P', (240, 160), bytes(canvas))
+    image.putpalette(rgb_palette)
+    return image.convert('RGB')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
-    chunks, palettes, frames, rows = [], bytearray(), [], []
-    for number in range(1, 4):
-        source = SOURCE / f'frame{number}.png'
-        original = Image.open(source).convert('RGB')
-        scaled = ImageOps.contain(original, (240, 120), Image.Resampling.LANCZOS)
-        indexed = scaled.quantize(colors=COLORS, method=Image.Quantize.MEDIANCUT,
-                                  dither=Image.Dither.NONE)
-        x, y = (240 - indexed.width) // 2, (160 - indexed.height) // 2
-        canvas = bytearray(240 * 160)
-        indices = indexed.tobytes()
-        for line in range(indexed.height):
-            start = (y + line) * 240 + x
-            canvas[start:start + indexed.width] = bytes(BASE + v for v in
-                indices[line * indexed.width:(line + 1) * indexed.width])
-        palette = indexed.getpalette()
-        colors = [(palette[3*i] >> 3) | (palette[3*i+1] >> 3) << 5 |
-                  (palette[3*i+2] >> 3) << 10 for i in range(COLORS)]
-        packed_palette = struct.pack('<64H', *colors)
-        palettes.extend(packed_palette)
-        chunk = compress(bytes(canvas))
-        assert decompress(chunk) == canvas
+    names = [f'loop{i}' for i in range(LOOP)]
+    loop = [scaled(name) for name in names]
+    # One palette over all loop frames, stacked vertically.
+    stack = Image.new('RGB', (loop[0][1].width, loop[0][1].height * LOOP))
+    for n, (_, image) in enumerate(loop):
+        stack.paste(image, (0, n * image.height))
+    shared = stack.quantize(colors=COLORS, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    canvases, rows = [], []
+    for name, (original, image) in zip(names, loop):
+        canvas, top_left = canvas_of(image.quantize(palette=shared, dither=Image.Dither.NONE))
+        canvases.append(canvas)
+        rows.append({'frame': name, 'source': str((SOURCE / f'{name}.png').relative_to(ROOT)),
+                     'source_sha256': hashlib.sha256((SOURCE / f'{name}.png').read_bytes()).hexdigest(),
+                     'original_size': original.size, 'display_size': image.size, 'top_left': top_left,
+                     'decoded_sha256': hashlib.sha256(canvas).hexdigest()})
+    original, image = scaled('final')
+    final_q = image.quantize(colors=COLORS, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    final, top_left = canvas_of(final_q)
+    rows.append({'frame': 'final', 'source': str((SOURCE / 'final.png').relative_to(ROOT)),
+                 'source_sha256': hashlib.sha256((SOURCE / 'final.png').read_bytes()).hexdigest(),
+                 'original_size': original.size, 'display_size': image.size, 'top_left': top_left,
+                 'decoded_sha256': hashlib.sha256(final).hexdigest()})
+    raw = [canvases[0]] + [bytes(a ^ b for a, b in zip(canvases[n - 1], canvases[n]))
+                           for n in range(1, LOOP)] + [final]
+    chunks = []
+    for data in raw:
+        chunk = compress(bytes(data))
+        assert decompress(chunk) == bytes(data)
         chunks.append(chunk)
-        rgb_palette = [0] * 768
-        for i, c in enumerate(colors, BASE):
-            rgb_palette[i*3:i*3+3] = [(c & 31) * 255 // 31,
-                ((c >> 5) & 31) * 255 // 31, ((c >> 10) & 31) * 255 // 31]
-        preview = Image.frombytes('P', (240, 160), bytes(canvas))
-        preview.putpalette(rgb_palette)
-        frames.append(preview.convert('RGB'))
-        rows.append({'frame': number, 'source': str(source.relative_to(ROOT)),
-            'source_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
-            'original_size': original.size, 'display_size': indexed.size,
-            'top_left': [x, y], 'lz_bytes': len(chunk),
-            'decoded_sha256': hashlib.sha256(canvas).hexdigest()})
+    for row, chunk in zip(rows[1:LOOP], chunks[1:LOOP]):
+        row['xor_delta_lz_bytes'] = len(chunk)
+    rows[0]['lz_bytes'], rows[-1]['lz_bytes'] = len(chunks[0]), len(chunks[-1])
+    # The runtime walks 0..4..1 with one XOR per step; check the round trip.
+    current, shown = bytearray(canvases[0]), 0
+    for target in [1, 2, 3, 4, 3, 2, 1, 0]:
+        current = bytearray(a ^ b for a, b in zip(current, raw[max(shown, target)]))
+        assert current == canvases[target], ('ping-pong', shown, target)
+        shown = target
+    loop_colors, final_colors = rgb555(shared), rgb555(final_q)
+    palettes = struct.pack(f'<{COLORS}H', *loop_colors) + struct.pack(f'<{COLORS}H', *final_colors)
     blob = indexed_chunks(chunks)
     header = '''/* Generated by tools/pack_ending_common.py. */
 #pragma once
-#define ENDING_COMMON_FRAMES 3
+/* Chunks: 0 loop key canvas, 1..4 XOR loop deltas, 5 final still. */
+#define ENDING_COMMON_LOOP_FRAMES 5
+#define ENDING_COMMON_FINAL_CHUNK 5
+#define ENDING_COMMON_LOOP_FPS 5
 #define ENDING_COMMON_PALETTE_BASE 16
-#define ENDING_COMMON_COLORS 64
+#define ENDING_COMMON_COLORS 240
+/* Palettes: loop colours, then final colours (ENDING_COMMON_COLORS each). */
 extern const uint8_t asset_ending_common[];
 extern const uint8_t asset_ending_common_palettes[];
 '''
@@ -68,13 +117,13 @@ extern const uint8_t asset_ending_common_palettes[];
     samples = int(re.search(r'#define ENDING_AUDIO_COMMON_OUTPUT_SAMPLES (\d+)', audio)[1])
     rate = int(re.search(r'#define ENDING_AUDIO_OUTPUT_RATE (\d+)', audio)[1])
     final_at = samples / rate - 10
-    report = {'format': 'independent Nintendo LZ10 240x160 Mode4 frames',
-        'initial_frame': 2, 'sequence': [2, 3],
-        'final_frame': 3, 'final_start_seconds': final_at,
+    report = {'format': 'Nintendo LZ10 240x160 Mode4: loop key, four XOR loop deltas, final still',
+        'loop': 'loop0..loop4..loop1 ping-pong at 5FPS, one shared palette',
+        'final_frame': 'final', 'final_start_seconds': final_at,
         'final_start_samples': samples-10*rate, 'audio_output_rate': rate,
         'transition': 'direct palette/page swap during VBlank; no fade or black frame',
         'final_hold': 'last10 seconds of soundtrack, then until A/B/START',
-        'colors_per_frame': COLORS, 'dither': False, 'frames': rows,
+        'colors_per_palette': COLORS, 'dither': False, 'frames': rows,
         'rom_bytes': len(blob) + len(palettes)}
     files = {'ending_common.lz': blob, 'ending_common_palettes.lz': palettes,
         'ending_common.h': header.encode(),
@@ -88,8 +137,9 @@ extern const uint8_t asset_ending_common_palettes[];
     if not args.check:
         preview_dir = OUT / 'stage51-validation'
         preview_dir.mkdir(exist_ok=True)
-        for number, frame in enumerate(frames, 1):
-            frame.save(preview_dir / f'common-frame{number}.png')
+        for n, canvas in enumerate(canvases):
+            preview(canvas, loop_colors).save(preview_dir / f'common-loop{n}.png')
+        preview(final, final_colors).save(preview_dir / 'common-final.png')
     print(f'{"CHECK" if args.check else "PACK"} common ending: {report["rom_bytes"]:,} bytes')
 
 
