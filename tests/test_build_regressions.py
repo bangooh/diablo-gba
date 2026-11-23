@@ -163,3 +163,11 @@ assert 'MC_SIZE=64' in corner and 'R16(0x04000018)=(uint16_t)((-MC_BOX_X)&511)' 
 assert 'if(map_corner()){mc_markers();return;}' in frames and 'if(map_corner()){mc_scroll();return;}' in frames
 print('Right corner minimap uses fixed box tiles under a centred hero PASS')
 
+# 8. Floors 1-4 fixed walls use the 0.9.7 75% stipple (odd row, odd column
+# cleared), matching floors 5-16; the fast path's mask follows the same rule.
+wall_tool = (r / 'game-source/tools/pack_fixed_wall_art.py').read_text()
+assert 'not (p&1 and (p//8)&1)' in wall_tool and 'not (x&1 and y&1)' in wall_tool
+assert '((p%8+p//8)&1)' not in wall_tool and '((x+y)&1)' not in wall_tool
+checker = frames[frames.index('void terrain_checker('):]
+assert 'unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;' in checker[:600]
+print('Fixed walls on floors 1-4 keep the 75% stipple PASS')

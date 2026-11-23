@@ -969,12 +969,13 @@ static __attribute__((noinline)) void terrain_piece(uint8_t *pixels,uint8_t *dep
   out[p]=(out[p]&~mask)|v;dst[p]=(dst[p]&~mask)|(zz&mask);
  }
 }
-/* Fully populated checker tiles have a known alpha mask; no per-pixel
- * transparency discovery is needed while the camera exposes new terrain. */
+/* Fully populated75% fixed-wall tiles have a known alpha mask (odd rows lose
+ * odd columns); no per-pixel transparency discovery is needed while the
+ * camera exposes new terrain. */
 static __attribute__((noinline)) void terrain_checker(uint8_t *pixels,uint8_t *depth,const uint8_t *piece,unsigned z){
  uint32_t *out=(uint32_t*)pixels,*dst=(uint32_t*)depth;const uint32_t *src=(const uint32_t*)piece;
  for(unsigned p=0;p<16;p++){
-  unsigned mask=(p&2)?0xff00ff00u:0x00ff00ffu;
+  unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;
   out[p]=(out[p]&~mask)|src[p];dst[p]=(dst[p]&~mask)|(z*0x01010101u&mask);
  }
 }
