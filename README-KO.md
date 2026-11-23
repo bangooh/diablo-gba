@@ -2,10 +2,10 @@
 
 ## Version 0.9.7.2
 
-Restore complete generation from the public tree (missing `pack_ui_audio.py`,
-host build of `actor_frames.c`), fix the hero sprite corruption whenever a
-monster dies in freshly generated builds, and reduce minimap and floor-list
-work per frame. See [fixes, measurements and limits](docs/RELEASE-0.9.7.2.md).
+Restore complete MPQ generation from the public tree, fix hero sprite
+corruption when monsters die in freshly generated builds, and reduce minimap
+and floor-list work per frame.
+See [fixes and validation limits](docs/RELEASE-0.9.7.2.md).
 Previous [0.9.7.1 monster damage and timing fixes](docs/RELEASE-0.9.7.1.md).
 
 
@@ -82,11 +82,11 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 
 ### 버전 0.9.7.2
 
-공개 저장소만으로 전체 생성이 멈추던 문제(`pack_ui_audio.py` 누락,
-PC에서 `actor_frames.c` 컴파일 실패)를 고쳤습니다. 새로 생성한 빌드에서
-몬스터가 죽을 때마다 캐릭터 그림이 깨지던 문제를 고치고, 미니맵과 바닥
-목록의 프레임당 작업량을 줄였습니다. 측정과 검증 범위는
-[변경 기록](docs/RELEASE-0.9.7.2.md)을 참고하세요.
+공개 저장소만으로 MPQ 전체 생성이 가능하도록 누락된 도구와 호스트 빌드
+문제를 고쳤습니다. 새로 생성한 빌드에서 몬스터가 죽을 때마다 캐릭터
+그림이 깨지던 문제를 고치고, 미니맵과 바닥 목록의 프레임당 작업량을
+줄였습니다. 측정 결과와 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.2.md)을
+참고하세요.
 
 ### 버전 0.9.6
 
