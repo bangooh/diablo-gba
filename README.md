@@ -1,12 +1,11 @@
-# Diablo GBA — source distribution (0.9.7.2)
+# Diablo GBA — source distribution (0.9.7.3)
 
-## Version 0.9.7.2
+## Version 0.9.7.3
 
-Restore complete MPQ generation from the public tree, fix hero sprite
-corruption when monsters die in freshly generated builds, and reduce minimap
-and floor-list work per frame.
-See [fixes and validation limits](docs/RELEASE-0.9.7.2.md).
-Previous [0.9.7.1 monster damage and timing fixes](docs/RELEASE-0.9.7.1.md).
+Fix the CPU rogue firing without a target and the brief idle pose CPU party
+members showed between steps.
+See [fixes and validation limits](docs/RELEASE-0.9.7.3.md).
+Previous [0.9.7.2 generation, corpse and performance fixes](docs/RELEASE-0.9.7.2.md).
 
 
 A C-based GBA-specific engine developed with reference to Devilution and
@@ -17,6 +16,13 @@ This source-available package includes the runtime, MPQ asset-generation
 scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
+
+## Version 0.9.7.2
+
+Restore complete MPQ generation from the public tree, fix hero sprite
+corruption when monsters die in freshly generated builds, and reduce minimap
+and floor-list work per frame.
+See [fixes and validation limits](docs/RELEASE-0.9.7.2.md).
 
 ## Version 0.9.7.1
 

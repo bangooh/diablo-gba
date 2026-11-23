@@ -20,7 +20,10 @@ static __attribute__((minsize,noinline)) int cpu_line(Game *g,int x,int y,int tx
  }return 0;
 }
 unsigned __attribute__((minsize,noinline)) coop_cpu_input(Game *g,unsigned id){
- if(g->hp<=0||g->move_wait||g->attack_wait||g->hit_flash)return 0;
+ /* Inputs are generated before game_step decrements these timers. Treat a
+  * final tick as ready, like a held human direction; otherwise every CPU
+  * step lost one simulation tick and briefly showed the idle pose. */
+ if(g->hp<=0||g->move_wait>1||g->attack_wait>1||g->hit_flash>1)return 0;
  if(g->hp<game_max_hp()/3&&g->potions)return (coop_players[id].previous&KEY_L)?0:KEY_L;
  const CoopPlayer *leader=cpu_leader(g);if(!leader)return 0;
  int tx=leader->x,ty=leader->y,best=-1,dist=10000;
@@ -30,7 +33,10 @@ unsigned __attribute__((minsize,noinline)) coop_cpu_input(Game *g,unsigned id){
   const Enemy *e=&g->enemies[i];if(e->alive!=1||game_enemy_hidden(g,i))continue;
   /* Use the same acquisition diamond as spell control. Otherwise a sleeping
    * gargoyle outside the screen keeps the sorcerer casting at empty space. */
-  if(cls==2&&!game_target_visible(g,i))continue;
+  /* Ranged classes use the same visibility as manual targeting. A rogue
+   * that chose an enemy outside it fired with no target, along its last
+   * (often retreating) facing. */
+  if(cls!=0&&!game_target_visible(g,i))continue;
   int dx=e->x-g->x,dy=e->y-g->y,d=dx*dx+dy*dy;
   /* Sorcerer visibility already proves the same strict Bresenham path. */
   if(cpu_abs(dx)>8||cpu_abs(dy)>8||d>=dist||(cls!=2&&!cpu_line(g,g->x,g->y,e->x,e->y)))continue;
@@ -44,7 +50,7 @@ unsigned __attribute__((minsize,noinline)) coop_cpu_input(Game *g,unsigned id){
      if(game_staff_slot()>=0){g->target=best;return (coop_players[id].previous&KEY_B)?0:KEY_B;}
      return 0;
     }
-   }else if(cpu_abs(dx)>2||cpu_abs(dy)>2)return KEY_A;
+   }else if(cpu_abs(dx)>2||cpu_abs(dy)>2){g->target=best;return KEY_A;}
    tx=g->x-dx;ty=g->y-dy;
   }else{if(cpu_abs(dx)<=1&&cpu_abs(dy)<=1)return KEY_A;tx=e->x;ty=e->y;}
  }else if(cpu_abs(tx-g->x)<=2&&cpu_abs(ty-g->y)<=2)return 0;
@@ -62,6 +68,6 @@ unsigned __attribute__((minsize,noinline)) coop_cpu_input(Game *g,unsigned id){
   if(x!=g->x&&y!=g->y&&(!game_walkable(g,x,g->y)||!game_walkable(g,g->x,y)))continue;
   int a=tx-x,b=ty-y,v=a*a+b*b;if(!n){choice=d;break;}if(v<score){score=v;choice=d;}
  }
- if(choice<0)return best>=0&&cls==1?KEY_A:0;
+ if(choice<0){if(best>=0&&cls==1){g->target=best;return KEY_A;}return 0;}
  return keys[choice];
 }

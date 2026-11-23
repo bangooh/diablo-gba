@@ -102,3 +102,15 @@ assert 'RAW_DUNGEON_ART' not in death, 'death sprites must not derive the raw ca
 assert death.count('town_map+DUNGEON_LAYOUT_OFFSET+MAP_W*MAP_H*2+(unsigned)cached*2048') == 2
 assert 'town_map+DUNGEON_LAYOUT_OFFSET+MAP_W*MAP_H*2+cached*2048' in frames
 print('Dead-body raw cache shares the living actor cache base PASS')
+
+# 5. CPU party: ranged CPUs target what manual targeting can see, the rogue
+# fires at its chosen enemy, and CPU input treats a final timer tick as ready
+# (inputs are generated before game_step decrements move/attack/hit timers).
+cpu = (src / 'coop_cpu.inc').read_text()
+yield_ = (src / 'coop_cpu_yield.inc').read_text()
+assert 'if(cls!=0&&!game_target_visible(g,i))continue;' in cpu
+assert '{g->target=best;return KEY_A;}' in cpu and 'return best>=0&&cls==1?KEY_A:0;' not in cpu
+ready = 'g->move_wait>1||g->attack_wait>1||g->hit_flash>1'
+assert ready in cpu and ready in yield_
+assert 'g->move_wait||g->attack_wait||g->hit_flash)' not in cpu + yield_
+print('CPU party targeting and step cadence PASS')

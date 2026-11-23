@@ -16,7 +16,7 @@ static CPU_YIELD_CODE int cpu_human_path(int x,int y,const uint16_t keys[4]){
  return 0;
 }
 static CPU_YIELD_CODE int coop_cpu_yield(Game *g,unsigned id,const uint16_t keys[4]){
- if(g->hp<=0||g->move_wait||g->attack_wait||g->hit_flash)return -1;
+ if(g->hp<=0||g->move_wait>1||g->attack_wait>1||g->hit_flash>1)return -1; /* see coop_cpu_input */
  if(!cpu_human_path(g->x,g->y,keys))return -1;
  static const int8_t dx[8]={1,0,-1,-1,-1,0,1,1},dy[8]={1,1,1,0,-1,-1,-1,0};
  static const uint16_t move[8]={KEY_DOWN,KEY_DOWN|KEY_LEFT,KEY_LEFT,KEY_LEFT|KEY_UP,KEY_UP,KEY_UP|KEY_RIGHT,KEY_RIGHT,KEY_RIGHT|KEY_DOWN};
