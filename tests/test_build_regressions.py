@@ -114,3 +114,15 @@ ready = 'g->move_wait>1||g->attack_wait>1||g->hit_flash>1'
 assert ready in cpu and ready in yield_
 assert 'g->move_wait||g->attack_wait||g->hit_flash)' not in cpu + yield_
 print('CPU party targeting and step cadence PASS')
+
+# 6. Fixed wall stipple stops at solid wall mass. Floor beyond a thick block is
+# another passage; counting it stippled near faces the player could not walk
+# behind (0.9.7.3 and earlier). Both the cathedral and the L2-L4 paths agree.
+frames_src = (src / 'gba_mode0.c').read_text()
+assert frames_src.count('if(back&&!game.map[by][bx])break;') == 2
+cath = frames_src[frames_src.index('static UI_FN void fixed_walls_prepare'):frames_src.index('static inline __attribute__((always_inline)) void fixed_world_wall_cell')]
+world = frames_src[frames_src.index('void fixed_world_wall_cell'):]
+world = world[:world.index('flags[cell]=')]
+for body, mark in ((cath, 'flags|=0xc000'), (world, 'mask|=0xc0')):
+    assert body.index('if(back&&!game.map[by][bx])break;') < body.index('if(back&&game.map[by][bx])' + mark)
+print('Fixed wall stipple stops at solid wall mass PASS')
