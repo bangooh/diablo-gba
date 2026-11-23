@@ -28,8 +28,10 @@ def main():
     finally:
         archive.file.close()
     rows = []
-    for index, frame in enumerate((189, 147, 824), 1):
-        target = frames / f'frame{index}.png'
+    # Epilogue: five native frames at 5FPS spacing for the ping-pong loop
+    # (147 is the former still), then the closing "The End" frame.
+    for name, frame in [(f'loop{i}', 147+3*i) for i in range(5)] + [('final', 824)]:
+        target = frames / f'{name}.png'
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(out / 'Diabend.smk'),
                         '-vf', f'select=eq(n\\,{frame})', '-frames:v', '1', str(target)], check=True)
         if not target.is_file():
@@ -39,7 +41,7 @@ def main():
     report = dict(movies=movies, frames=rows, frame_numbering='zero-based',
                   note='Native movie replacements; not pixel-identical to earlier supplied stills.')
     (out / 'mpq-presentation-report.json').write_text(json.dumps(report, indent=2) + '\n')
-    print('PASS: two ending movies and three native stills')
+    print('PASS: two ending movies, five epilogue loop frames and the final still')
 
 
 if __name__ == '__main__':

@@ -35,41 +35,59 @@ static UI_FN void ending_movie(unsigned *page){
     pixels[21*240+2*i+1]=16+(packed[i]>>4);
    }
    front_present(page);
+   /* Each frame carries its own 16-colour tint; swap it in the same VBlank. */
+   dma(asset_ending_video_palette+(next-1)*32,(void*)0x05000020,32);
   }else front_vblank();
   if(ending_pressed(&prev)||!audio_ending_busy())break;
  }
  ending_fade(0,16);audio_stop();
 }
-static UI_FN void ending_common_page(unsigned choice,unsigned *page){
- dma((uint8_t*)town_map+(choice+1)*38400,town_map,38400);
- /* Keep the visible image and its palette intact while preparing the next
-  * page. Swap both in the same VBlank; no fade or black frame is inserted. */
+/* Show a prepared canvas on the hidden page; palette 0 is the loop's, 1 the
+ * final still's, 2 keeps the current one. Swap page and palette in one VBlank
+ * with no fade or black frame. */
+static UI_FN void ending_common_show(const uint8_t *canvas,unsigned palette,unsigned *page){
  unsigned next=*page^1;
  lighting_hardware_stop();
- dma(town_map,(void*)(0x06000000+next*0xa000),38400);
- dma(asset_ending_common_palettes+choice*ENDING_COMMON_COLORS*2,
-     base_palette+ENDING_COMMON_PALETTE_BASE,ENDING_COMMON_COLORS*2);
+ dma(canvas,(void*)(0x06000000+next*0xa000),38400);
+ if(palette<2)dma(asset_ending_common_palettes+palette*ENDING_COMMON_COLORS*2,
+                  base_palette+ENDING_COMMON_PALETTE_BASE,ENDING_COMMON_COLORS*2);
  front_vblank();
- dma(base_palette,(void*)0x05000000,512);
+ if(palette<2)dma(base_palette,(void*)0x05000000,512);
  R16(0x04000050)=0;R16(0x04000054)=0;
- R16(0x04000000)=0x0404|(next<<4);*page=next;frontend_frame=choice;
+ R16(0x04000000)=0x0404|(next<<4);*page=next;
 }
 static UI_FN unsigned ending_common_choice(unsigned position){
  if(position>=ENDING_AUDIO_COMMON_OUTPUT_SAMPLES-10*ENDING_AUDIO_OUTPUT_RATE)return 2;
  return 1;
 }
 static UI_FN void ending_common(unsigned *page){
- unsigned shown=3,prev=(~R16(0x04000130))&1023;
- /* The suspended scene arena fits the visible canvas plus all three decoded
-  * stills (153600 of159744 bytes). Prepare once before starting the clock so
-  * later cuts need only a DMA copy and one VBlank, without decoder delay. */
- for(unsigned i=0;i<3;i++)
-  lz_block(asset_ending_common,i,(uint8_t*)town_map+(i+1)*38400,38400);
+ /* The suspended scene arena holds the current loop canvas, one decoded
+  * XOR delta and the final still (115200 of159744 bytes). The loop plays
+  * loop0..4..1 at the audio clock's 5FPS; each step decodes one delta. */
+ uint8_t *current=(uint8_t*)town_map+38400,*delta=current+38400,*final=delta+38400;
+ static const uint8_t sequence[8]={0,1,2,3,4,3,2,1};
+ lz_block(asset_ending_common,0,current,38400);
+ lz_block(asset_ending_common,ENDING_COMMON_FINAL_CHUNK,final,38400);
+ unsigned prev=(~R16(0x04000130))&1023,shown=0,step=0,closing=0;
+ ending_common_show(current,0,page);
  frontend_mode=11;audio_ending_start(1);
  for(;;){
-  unsigned choice=ending_common_choice(audio_ending_position());
-  if(choice!=shown){ending_common_page(choice,page);shown=choice;}
-  else front_vblank();
+  unsigned position=audio_ending_position();
+  if(ending_common_choice(position)==2){
+   if(!closing){ending_common_show(final,1,page);closing=1;}else front_vblank();
+  }else{
+   unsigned now=position*ENDING_COMMON_LOOP_FPS/ENDING_AUDIO_OUTPUT_RATE;
+   if(now!=step){
+    step=now;unsigned target=sequence[step&7];
+    while(shown!=target){
+     unsigned next=target>shown?shown+1:shown-1;
+     lz_block(asset_ending_common,next>shown?next:shown,delta,38400);
+     for(unsigned i=0;i<38400/4;i++)((uint32_t*)current)[i]^=((const uint32_t*)delta)[i];
+     shown=next;
+    }
+    ending_common_show(current,2,page);
+   }else front_vblank();
+  }
   if(ending_pressed(&prev)||!audio_ending_busy())break;
  }
  ending_fade(0,16);audio_stop();
