@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/publish-source-releases.yml'
-      - 'docs/RELEASE-0.9.7.2.md'
+      - 'docs/RELEASE-0.9.7.3.md'
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,7 +38,10 @@ jobs:
             gh release create v0.9.7.1 --target e63a66054757bd1fa47af7aad68adc47ca47d710 --title 'Diablo GBA 0.9.7.1' --notes-file docs/RELEASE-0.9.7.1.md --latest=false
           fi
           if ! gh release view v0.9.7.2 >/dev/null 2>&1; then
-            gh release create v0.9.7.2 --target "$RELEASE_SHA" --title 'Diablo GBA 0.9.7.2' --notes-file docs/RELEASE-0.9.7.2.md --latest
+            gh release create v0.9.7.2 --target e2e6631bd68bbaae2f86d73f0605aa6be8dd0934 --title 'Diablo GBA 0.9.7.2' --notes-file docs/RELEASE-0.9.7.2.md --latest=false
+          fi
+          if ! gh release view v0.9.7.3 >/dev/null 2>&1; then
+            gh release create v0.9.7.3 --target "$RELEASE_SHA" --title 'Diablo GBA 0.9.7.3' --notes-file docs/RELEASE-0.9.7.3.md --latest
           else
-            gh release edit v0.9.7.2 --notes-file docs/RELEASE-0.9.7.2.md
+            gh release edit v0.9.7.3 --notes-file docs/RELEASE-0.9.7.3.md
           fi
