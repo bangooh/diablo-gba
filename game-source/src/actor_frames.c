@@ -1,4 +1,8 @@
+#if defined(__arm__) || defined(__thumb__)
 #define THUMB_FN __attribute__((target("thumb")))
+#else
+#define THUMB_FN
+#endif
 #include "actor_frames.h"
 #include "lz.h"
 #define ROM_FN __attribute__((section(".text.ui")))
