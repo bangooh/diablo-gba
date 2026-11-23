@@ -569,10 +569,14 @@ static UI_FN void fixed_walls_prepare(void){
   else {
    /* The 80px wall extends across several cells behind its anchor.
     * Adjacent-only tests leave opaque halves in front of a diagonal path.
-    * Resolve the full rear footprint once when loading the dungeon. */
+    * Resolve the rear footprint once when loading the dungeon, but stop at
+    * solid wall mass: floor beyond a thick block is another passage, and
+    * stippling the near face for it showed see-through walls the player
+    * could not walk behind. */
    for(int back=0;back<5;back++){
     int bx=x-back,by=y-back;
     if(bx<0||by<0)break;
+    if(back&&!game.map[by][bx])break;
     if(back&&game.map[by][bx])flags|=0xc000;
     if(bx>0&&game.map[by][bx-1])flags|=0x4000;
     if(by>0&&game.map[by-1][bx])flags|=0x8000;
@@ -589,6 +593,7 @@ static inline __attribute__((always_inline)) void fixed_world_wall_cell(int x,in
   unsigned cell=y*MAP_W+x,base=flags[cell]&1,mask=0;
   if(base)for(unsigned back=0;back<reach;back++){
    int bx=x-(int)back,by=y-(int)back;if(bx<0||by<0)break;
+   if(back&&!game.map[by][bx])break; /* solid mass: see fixed_walls_prepare */
    if(back&&game.map[by][bx])mask|=0xc0;
    if(bx>0&&game.map[by][bx-1])mask|=0x40;
    if(by>0&&game.map[by-1][bx])mask|=0x80;

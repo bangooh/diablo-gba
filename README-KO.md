@@ -1,11 +1,11 @@
-# Diablo GBA 0.9.7.3 source distribution — English / Korean
+# Diablo GBA 0.9.7.4 source distribution — English / Korean
 
-## Version 0.9.7.3
+## Version 0.9.7.4
 
-Fix the CPU rogue firing without a target and the brief idle pose CPU party
-members showed between steps.
-See [fixes and validation limits](docs/RELEASE-0.9.7.3.md).
-Previous [0.9.7.2 generation, corpse and performance fixes](docs/RELEASE-0.9.7.2.md).
+Stop stippling wall faces in front of thick wall mass, where the player cannot
+walk behind them, on every dungeon level.
+See [fixes and validation limits](docs/RELEASE-0.9.7.4.md).
+Previous [0.9.7.3 CPU party fixes](docs/RELEASE-0.9.7.3.md).
 
 
 ## English
@@ -18,6 +18,11 @@ The package includes game code, MPQ conversion tools and existing attributed
 3×5, 5×5 and 7×7 font inputs. Game artwork, audio, videos, MPQs, ROMs and saves
 are not included. The 7×7 font is stored in 8×8 cells. Existing font attribution
 notices are preserved.
+
+### Version 0.9.7.4
+
+Wall faces in front of thick wall mass are no longer stippled.
+See [fixes and validation limits](docs/RELEASE-0.9.7.4.md).
 
 ### Version 0.9.7.3
 
@@ -91,7 +96,7 @@ Public repository: https://github.com/bangooh/diablo-gba
 
 ## Korean / 한국어
 
-### Diablo GBA 0.9.7.3 소스 배포본
+### Diablo GBA 0.9.7.4 소스 배포본
 
 Bangoo의 비공식 팬 프로젝트입니다. Devilution과 DevilutionX를 참고한
 C 기반 GBA 전용 엔진이며 Blizzard 또는 Nintendo의 공식 제품이 아닙니다.
@@ -100,6 +105,12 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 게임 코드, MPQ 변환 도구, 출처가 표시된 기존 3×5·5×5·7×7 폰트 입력을
 포함합니다. 게임 이미지·음원·영상·MPQ·ROM·세이브는 포함하지 않습니다.
 7×7 폰트는 8×8 셀에 저장됩니다. 폰트의 기존 출처 고지는 유지합니다.
+
+### 버전 0.9.7.4
+
+두꺼운 벽 덩어리 너머에 다른 통로가 있다는 이유만으로, 플레이어가 뒤로 갈 수
+없는 앞쪽 벽면까지 반투명하게 그려지던 문제를 모든 층에서 고쳤습니다.
+수정 내용과 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.4.md)을 참고하세요.
 
 ### 버전 0.9.7.3
 
