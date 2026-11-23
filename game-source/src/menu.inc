@@ -89,7 +89,7 @@ static UI_FN void town_drops_apply(Game *g){
   for(unsigned j=0;j<12;j++)((uint8_t*)d)[4+j]=s->payload[j];
  }
 }
-static UI_FN void save_metadata(void){if(game.area)town_drops_capture(&game);save_buffer.seed=campaign_seed;save_buffer.quest=butcher_quest;save_buffer.smith=town_smith;for(unsigned i=0;i<VENDOR_COUNT-1;i++)save_buffer.other[i]=town_other[i];save_buffer.premium=town_premium;save_buffer.quests=quest_progress;save_buffer.shop_reserved=0;save_buffer.metadata_padding=options_volume_pack(audio_music_enabled?audio_music_volume:0,audio_effects_volume);save_buffer.metadata_padding3=options_dpad_pack(dpad_rotation);save_buffer.metadata_reserved=coop_campaign_epoch;save_buffer.metadata_padding2=game_difficulty;capture_history();}
+static UI_FN void save_metadata(void){if(game.area)town_drops_capture(&game);save_buffer.seed=campaign_seed;save_buffer.quest=butcher_quest;save_buffer.smith=town_smith;for(unsigned i=0;i<VENDOR_COUNT-1;i++)save_buffer.other[i]=town_other[i];save_buffer.premium=town_premium;save_buffer.quests=quest_progress;save_buffer.shop_reserved=0;save_buffer.metadata_padding=options_volume_pack(audio_music_enabled?audio_music_volume:0,audio_effects_volume);save_buffer.metadata_padding3=options_dpad_pack(dpad_rotation,map_layout);save_buffer.metadata_reserved=coop_campaign_epoch;save_buffer.metadata_padding2=game_difficulty;capture_history();}
 /* Live goats retain9-bit HP and maxHP in the coordinate high bits.
  * Legal tile coordinates need only7 bits. Dead records keep signed16 HP.
  * Retail Hell multiplayer Gharbad is483 HP; the five-byte size is unchanged. */
@@ -183,7 +183,7 @@ static UI_FN int save_restore(Game *g){
  for(unsigned i=0;i<sizeof(meta);i++)((uint8_t*)&save_buffer)[i]=((uint8_t*)&meta)[i];
  if(!meta.location.area&&!floor_read(meta.location.reserved,&save_buffer.floor))return 0;
  game_spell_new_campaign();game_set_difficulty(save_buffer.metadata_padding2);coop_campaign_epoch=save_buffer.metadata_reserved;
- options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);
+ options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);map_layout_set(options_map_unpack(save_buffer.metadata_padding3));
  dungeon_level=save_buffer.location.reserved;butcher_quest=save_buffer.quest;campaign_seed=save_buffer.seed;quest_progress=save_buffer.quests;town_premium=save_buffer.premium;town_smith=save_buffer.smith;for(unsigned i=0;i<VENDOR_COUNT-1;i++)town_other[i]=save_buffer.other[i];
  if(!save_buffer.location.area){
   floor_generate(g,dungeon_level);floor_apply(g,&save_buffer.floor);game_explore_import(save_buffer.floor.explored);
@@ -230,7 +230,7 @@ static UI_FN int save_prepare_shops(int fresh){
 }
 /* Construct a valid personal world without touching the active shared world. */
 static UI_FN int save_personal_begin(const CharacterState *hero,uint32_t seed){
- clear_save_buffer();save_buffer.hero=*hero;save_buffer.seed=seed;save_buffer.gamma=gamma_level;save_buffer.metadata_padding=options_volume_pack(audio_music_enabled?audio_music_volume:0,audio_effects_volume);save_buffer.metadata_padding3=options_dpad_pack(dpad_rotation);save_buffer.quest=item_seed(seed^0x51524731u)%3!=0;
+ clear_save_buffer();save_buffer.hero=*hero;save_buffer.seed=seed;save_buffer.gamma=gamma_level;save_buffer.metadata_padding=options_volume_pack(audio_music_enabled?audio_music_volume:0,audio_effects_volume);save_buffer.metadata_padding3=options_dpad_pack(dpad_rotation,map_layout);save_buffer.quest=item_seed(seed^0x51524731u)%3!=0;
  if(save_buffer.hero.hp<=0)save_buffer.hero.hp=game_character_max_hp(&save_buffer.hero);
  save_buffer.location.x=75;save_buffer.location.y=68;save_buffer.location.area=1;save_buffer.location.reserved=1;
  int x=(1536+7*16)*256,y=(128+143*8)*256;save_buffer.player=(Motion){x,y,x,y,x,y,0,0,0};
@@ -462,7 +462,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
             }else if(confirm_action==2){
                 CharacterState hero;
                 if(session_hero)game_get_character(&game,&hero);
-                else if(save_read()){hero=save_buffer.hero;gamma_level=save_buffer.gamma;options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);}
+                else if(save_read()){hero=save_buffer.hero;gamma_level=save_buffer.gamma;options_volume_apply(save_buffer.metadata_padding);dpad_rotation=options_dpad_unpack(save_buffer.metadata_padding3);map_layout_set(options_map_unpack(save_buffer.metadata_padding3));}
                 else{menu_mode=4;menu_notice="NO VALID HERO";menu_draw();return;}
                 game_seed_next(item_seed(campaign_seed ^ (uint32_t)R16(0x04000100)*2654435761u ^ graphics_frames*2246822519u ^ (uint32_t)game.ticks));
                 game_set_difficulty(new_difficulty);game_new_campaign(&game,&hero);active_game=session_hero=1;
@@ -480,7 +480,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
         menu_draw();return;
     }
     if(menu_mode==1&&active_game&&game.hp<=0&&!menu_choice&&(pressed&KEY_A)){menu_draw();return;}
-    unsigned item_count=5;
+    unsigned item_count=menu_mode==2?6:5;
     if(pressed&KEY_UP)menu_choice=(menu_choice+item_count-1)%item_count;
     else if(pressed&KEY_DOWN)menu_choice=(menu_choice+1)%item_count;
     if(menu_mode==1&&active_game&&game.hp<=0&&!menu_choice)menu_choice=(pressed&KEY_UP)?4:1;
@@ -502,8 +502,9 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
             /* Visible order: CCW, Original, CW; A advances like Right. */
             dpad_rotation=(dpad_rotation+((pressed&KEY_LEFT)?1:2))%OPTIONS_DPAD_COUNT;
         }
-        if((pressed&KEY_A)&&menu_choice==4){menu_mode=1;menu_choice=coop_active&&game.hp>0?0:1;}
-        else if(menu_choice<4&&(pressed&(KEY_LEFT|KEY_RIGHT)))audio_ui(AUDIO_UI_MOVE);
+        if(menu_choice==4&&(pressed&(KEY_LEFT|KEY_RIGHT|KEY_A)))map_layout_set(!map_layout);
+        if((pressed&KEY_A)&&menu_choice==5){menu_mode=1;menu_choice=coop_active&&game.hp>0?0:1;}
+        else if(menu_choice<5&&(pressed&(KEY_LEFT|KEY_RIGHT)))audio_ui(AUDIO_UI_MOVE);
     }else if(pressed&KEY_A){
         if(menu_choice==0){
             menu_mode=4;menu_notice=!active_game||game.hp<=0?"SAVE UNAVAILABLE":save_write(*animation)?"GAME SAVED":"SAVE FAILED";

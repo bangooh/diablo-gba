@@ -39,7 +39,7 @@ static UI_FN void panel_cursor(unsigned y,unsigned frame,unsigned left,unsigned 
  * shadow, fits one tile row in the bounded death-menu dictionary. */
 static UI_FN void menu_cursor(unsigned frame){
  if(menu_mode==1)panel_cursor((coop_active?57:46)+menu_choice*11*(coop_active?2:1),frame,43,187);
- else if(menu_mode==2)panel_cursor(47+menu_choice*16,frame,22,215);
+ else if(menu_mode==2)panel_cursor(45+menu_choice*15,frame,22,215);
  else if(menu_mode==15)panel_cursor(71+menu_choice*18,frame,43,187);
 }
 /* Death keeps the frozen dungeon beneath a transparent font overlay.
@@ -59,7 +59,7 @@ static UI_FN __attribute__((minsize)) void death_cursor_prepare(void){
 }
 static UI_FN __attribute__((minsize)) void death_menu_cursor(void){
  if(menu_mode!=1&&menu_mode!=2&&menu_mode!=15)return;
- unsigned frame=(audio_game_clock()/1640)&7,y=menu_mode==1?39+menu_choice*16:menu_mode==2?47+menu_choice*16:71+menu_choice*18;
+ unsigned frame=(audio_game_clock()/1640)&7,y=menu_mode==1?39+menu_choice*16:menu_mode==2?45+menu_choice*15:71+menu_choice*18;
  const uint8_t *src=panel_cursor_tiles[frame];
  for(unsigned i=0;i<128;i++)R16(0x06010000+832*32+i*2)=R16(0x06010000+840*32+(src[i]&15)*2)|(R16(0x06010000+840*32+(src[i]>>4)*2)<<8);
  for(unsigned side=0;side<2;side++){
@@ -71,7 +71,7 @@ static UI_FN __attribute__((minsize)) void death_menu_cursor(void){
  * disabling the frozen world. Never borrow terrain or live actor graphics. */
 static UI_FN unsigned death_text_tile(unsigned n){return n<87?265+n:n<109?133+n-87:163+n-109;}
 static UI_FN __attribute__((target("thumb"),minsize)) void death_menu_draw(void){
- unsigned key=0xd0000000u|menu_mode|(confirm_action<<8)|(gamma_level<<16)|(audio_music_volume<<12)|(audio_effects_volume<<21)|(dpad_rotation<<25);
+ unsigned key=0xd0000000u|menu_mode|(confirm_action<<8)|(gamma_level<<16)|(audio_music_volume<<12)|(audio_effects_volume<<21)|(dpad_rotation<<25)|((unsigned)map_layout<<27);
  if(death_red_ready&&panel_key==key){death_menu_cursor();return;}
  if(menu_mode==1&&!menu_choice)menu_choice=1;
  info_stream_stop();lighting_hardware_stop();map_pending=0;map_init=1;frame_state&=~1u;
@@ -90,12 +90,12 @@ static UI_FN __attribute__((target("thumb"),minsize)) void death_menu_draw(void)
    const char *coop_items[]={"Save Game","Options","Restart at dungeon entrance","Save and leave"};
    for(unsigned i=0;i<(coop_active?4u:5u);i++)panel_center(p,top,40+i*16,coop_active?coop_items[i]:items[i],i? action:gray,0);
   }else if(menu_mode==2){
-   const char *items[]={"Music","Sound","Gamma","D-pad Rotation","Previous Menu"};unsigned levels[]={audio_music_volume,audio_effects_volume,gamma_level+1};
-   for(unsigned i=0;i<5;i++){
-    unsigned y=48+i*16;
+   const char *items[]={"Music","Sound","Gamma","D-pad Rotation","Minimap","Previous Menu"};unsigned levels[]={audio_music_volume,audio_effects_volume,gamma_level+1};
+   for(unsigned i=0;i<6;i++){
+    unsigned y=46+i*15;
     quick_text(p,top,39,y,items[i],action,0);
     if(i<3){char value[12],*end=!i&&!audio_music_enabled?quick_append(value,"Off"):quick_append(quick_number(value,levels[i]),i==2?"/20":"/10");*end=0;quick_text(p,top,181,y,value,gold,0);}
-    else if(i==3)quick_text(p,top,210-quick_text_width(options_dpad_labels[dpad_rotation],1),y+1,options_dpad_labels[dpad_rotation],gold,1);
+    else if(i<5){const char *label=i==3?options_dpad_labels[dpad_rotation]:options_map_labels[map_layout];quick_text(p,top,210-quick_text_width(label,1),y+1,label,gold,1);}
    }
   }else if(menu_mode==15){
    panel_center(p,top,50,"Difficulty",gold,0);
@@ -130,7 +130,7 @@ static UI_FN __attribute__((minsize)) void menu_canvas_draw(void){
   status_draw(&h,menu_choice,0);panel_key=key;return;
  }
  unsigned frame=(audio_game_clock()/1640)&7;
- uint32_t key=menu_mode|(audio_music_volume<<12)|(audio_effects_volume<<16)|(gamma_level<<20)|(dpad_rotation<<25)|(game.hp<=0?1u<<28:0);
+ uint32_t key=menu_mode|(audio_music_volume<<12)|(audio_effects_volume<<16)|(gamma_level<<20)|(dpad_rotation<<25)|((uint32_t)map_layout<<27)|(game.hp<=0?1u<<28:0);
  if(inventory_art_active==2&&panel_key==key){menu_cursor(frame);return;}
  if(menu_mode==1&&game.hp<=0&&!menu_choice)menu_choice=1;
  uint8_t lut[32];panel_begin(lut);
@@ -149,13 +149,13 @@ static UI_FN __attribute__((minsize)) void menu_canvas_draw(void){
    quick_text(p,top,16,144,"Select: quick spell",white,1);quick_text(p,top,128,144,"Start: menu shortcut",white,1);
 
   }else if(menu_mode==2){
-   const char *items[]={"Music","Sound","Gamma","D-pad Rotation","Previous Menu"};
+   const char *items[]={"Music","Sound","Gamma","D-pad Rotation","Minimap","Previous Menu"};
    unsigned levels[]={audio_music_volume,audio_effects_volume,gamma_level+1};
-   for(unsigned i=0;i<5;i++){
-    unsigned y=48+i*16;
+   for(unsigned i=0;i<6;i++){
+    unsigned y=46+i*15;
     quick_text(p,top,39,y,items[i],action,0);
     if(i<3){char value[12],*end=!i&&!audio_music_enabled?quick_append(value,"Off"):quick_append(quick_number(value,levels[i]),i==2?"/20":"/10");*end=0;quick_text(p,top,181,y,value,gold,0);}
-    else if(i==3)quick_text(p,top,210-quick_text_width(options_dpad_labels[dpad_rotation],1),y+1,options_dpad_labels[dpad_rotation],gold,1);
+    else if(i<5){const char *label=i==3?options_dpad_labels[dpad_rotation]:options_map_labels[map_layout];quick_text(p,top,210-quick_text_width(label,1),y+1,label,gold,1);}
    }
 
    quick_text(p,top,16,139,"Dpad: adjust  B: back  A: select",white,1);

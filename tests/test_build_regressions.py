@@ -4,6 +4,7 @@
 2. Host-side decoders that compile src/actor_frames.c build with the host CC.
 3. Dead-body raw-cache slots use the living actor raw-cache base.
 4. Minimap/floor optimizations match the previous algorithms on random input.
+7. Options > Minimap shares the D-pad save word without disturbing old saves.
 """
 from pathlib import Path
 import os, re, subprocess, tempfile
@@ -126,3 +127,39 @@ world = world[:world.index('flags[cell]=')]
 for body, mark in ((cath, 'flags|=0xc000'), (world, 'mask|=0xc0')):
     assert body.index('if(back&&!game.map[by][bx])break;') < body.index('if(back&&game.map[by][bx])' + mark)
 print('Fixed wall stipple stops at solid wall mass PASS')
+
+# 7. Options > Minimap (Right corner map / Center full map) is bit2 of the
+# D-pad save word. Older saves (bit2 clear) keep their rotation and load as
+# Right, the new default; Center keeps the rotation too.
+opts = (src / 'options.h').read_text()
+need = ('enum { OPTIONS_DPAD_TAG', 'enum { OPTIONS_DPAD_ORIGINAL', 'enum { OPTIONS_MAP_RIGHT',
+        'static inline unsigned options_dpad_valid', 'static inline unsigned options_dpad_pack',
+        'static inline unsigned options_dpad_unpack', 'static inline unsigned options_map_unpack')
+lines = [l.replace('__attribute__((section(".text.ui"))) ', '') for l in opts.splitlines()
+         if any(k in l for k in need)]
+assert len(lines) == len(need), lines
+option_test = r'''
+int main(void){
+ for(unsigned r=0;r<OPTIONS_DPAD_COUNT;r++){
+  unsigned old=OPTIONS_DPAD_TAG|r;                      /* 0.9.7.4 and earlier */
+  assert(options_dpad_unpack(old)==r&&options_map_unpack(old)==OPTIONS_MAP_RIGHT);
+  for(unsigned m=0;m<OPTIONS_MAP_COUNT;m++){
+   unsigned w=options_dpad_pack(r,m);
+   assert(options_dpad_unpack(w)==r&&options_map_unpack(w)==m);
+  }
+ }
+ unsigned bad[]={0u,0xffffffffu,OPTIONS_DPAD_TAG|3u,OPTIONS_DPAD_TAG|7u,OPTIONS_DPAD_TAG|8u};
+ for(unsigned i=0;i<sizeof bad/sizeof*bad;i++)
+  assert(options_dpad_unpack(bad[i])==OPTIONS_DPAD_ORIGINAL&&options_map_unpack(bad[i])==OPTIONS_MAP_RIGHT);
+ puts("Minimap layout option shares the D-pad save word PASS");return 0;}
+'''
+with tempfile.TemporaryDirectory() as td:
+    d = Path(td)
+    (d / 'opt.c').write_text('#include <assert.h>\n#include <stdio.h>\n' + '\n'.join(lines) + option_test)
+    subprocess.run([cc, '-O2', str(d / 'opt.c'), '-o', str(d / 'opt')], check=True)
+    subprocess.run([str(d / 'opt')], check=True)
+corner = (src / 'automap_corner.inc').read_text()
+assert 'MC_SIZE=64' in corner and 'R16(0x04000018)=(uint16_t)((-MC_BOX_X)&511)' in corner and 'if(map_corner()){mc_draw();return;}' in (src / 'automap_stream.inc').read_text()
+assert 'if(map_corner()){mc_markers();return;}' in frames and 'if(map_corner()){mc_scroll();return;}' in frames
+print('Right corner minimap uses fixed box tiles under a centred hero PASS')
+
