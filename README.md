@@ -1,11 +1,11 @@
-# Diablo GBA — source distribution (0.9.7.3)
+# Diablo GBA — source distribution (0.9.7.4)
 
-## Version 0.9.7.3
+## Version 0.9.7.4
 
-Fix the CPU rogue firing without a target and the brief idle pose CPU party
-members showed between steps.
-See [fixes and validation limits](docs/RELEASE-0.9.7.3.md).
-Previous [0.9.7.2 generation, corpse and performance fixes](docs/RELEASE-0.9.7.2.md).
+Stop stippling wall faces in front of thick wall mass, where the player cannot
+walk behind them, on every dungeon level.
+See [fixes and validation limits](docs/RELEASE-0.9.7.4.md).
+Previous [0.9.7.3 CPU party fixes](docs/RELEASE-0.9.7.3.md).
 
 
 A C-based GBA-specific engine developed with reference to Devilution and
@@ -16,6 +16,12 @@ This source-available package includes the runtime, MPQ asset-generation
 scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
+
+## Version 0.9.7.3
+
+Fix the CPU rogue firing without a target and the brief idle pose CPU party
+members showed between steps.
+See [fixes and validation limits](docs/RELEASE-0.9.7.3.md).
 
 ## Version 0.9.7.2
 
