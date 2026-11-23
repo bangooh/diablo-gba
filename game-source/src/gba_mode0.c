@@ -853,20 +853,28 @@ THUMB_FN static UI_FN void floor_prepare(void){
  unsigned next=floor_list^1,n=0;FloorDraw *out=FLOOR_LIST(next),*old=FLOOR_LIST(floor_list);
  highlighted_drop=!game.attack_wait&&game.target==TARGET_ITEM?game_item_target(&game):-1;
  /* All remains precede all items, so loot is always readable above a body. */
- for(int i=coop_active?MAX_ENEMIES:0;i<MAX_ENEMIES+MAX_DROPS;i++){
-  int x,y,lift=0;unsigned frame;
-  if(i<MAX_ENEMIES){
-   const Corpse *c=&game_corpses[i];if(!c->ticks||c->kind>=MONSTER_TYPES)continue;
-   int selected=death_sprite_index(i);if(selected>=0){DEATH_SPRITE_STATE->floor_start[selected]=(uint8_t)n;continue;}
-   x=c->x;y=c->y;frame=game_corpse_frame(c);
-  }else{
-   int index=i-MAX_ENEMIES;const Drop *d=&game.drops[index];
-   if(!d->active||d->kind>=ITEM_COUNT)continue;
-   x=d->x;y=d->y;if(game_quest_pickable(&game,d))lift=10;Item art_item=item_from_drop(d);frame=(index==highlighted_drop?FLOOR_BRIGHT_BASE:FLOOR_ITEM_BASE)+ground_item_image[item_art_index(&art_item)];
-  }
-  int wx=DUNGEON_ORIGIN+(x-y)*16-32,wy=72+(x+y)*8-64-lift;
-  if(wx+64<=cam_x||wx>=cam_x+248||wy+64<=cam_y||wy>=cam_y+168)continue;
-  out[n++]=(FloorDraw){wx,wy,(wy+64+lift)/8,(uint8_t)i,(uint16_t)frame};
+ /* Visibility bounds hoisted out of the loops; remains, then drops, in the
+  * same index order as before. Drops are culled before the pure quest/art
+  * lookups: lift is 0 or 10 and only raises wy, so the early test cannot
+  * reject an entry the final test would keep. */
+ const int min_x=cam_x-64,max_x=cam_x+248,min_y=cam_y-64,max_y=cam_y+168;
+ if(!coop_active)for(int i=0;i<MAX_ENEMIES;i++){
+  const Corpse *c=&game_corpses[i];if(!c->ticks||c->kind>=MONSTER_TYPES)continue;
+  int selected=death_sprite_index(i);if(selected>=0){DEATH_SPRITE_STATE->floor_start[selected]=(uint8_t)n;continue;}
+  int x=c->x,y=c->y,wx=DUNGEON_ORIGIN+(x-y)*16-32,wy=72+(x+y)*8-64;
+  if(wx<=min_x||wx>=max_x||wy<=min_y||wy>=max_y)continue;
+  out[n++]=(FloorDraw){wx,wy,(wy+64)/8,(uint8_t)i,(uint16_t)game_corpse_frame(c)};
+ }
+ for(int index=0;index<MAX_DROPS;index++){
+  const Drop *d=&game.drops[index];
+  if(!d->active||d->kind>=ITEM_COUNT)continue;
+  int x=d->x,y=d->y,wx=DUNGEON_ORIGIN+(x-y)*16-32,wy=72+(x+y)*8-64,lift=0;
+  if(wx<=min_x||wx>=max_x||wy<=min_y||wy-10>=max_y)continue;
+  if(game_quest_pickable(&game,d)){lift=10;wy-=10;}
+  if(wy<=min_y||wy>=max_y)continue;
+  Item art_item=item_from_drop(d);
+  unsigned frame=(index==highlighted_drop?FLOOR_BRIGHT_BASE:FLOOR_ITEM_BASE)+ground_item_image[item_art_index(&art_item)];
+  out[n++]=(FloorDraw){wx,wy,(wy+64+lift)/8,(uint8_t)(index+MAX_ENEMIES),(uint16_t)frame};
  }
  floor_list_invalidate(out,n,old,floor_count[floor_list]);
  floor_count[next]=n;floor_list=next;floor_coverage();
