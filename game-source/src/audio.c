@@ -1,4 +1,8 @@
+#if defined(__arm__) || defined(__thumb__)
 #define THUMB_FN __attribute__((target("thumb")))
+#else
+#define THUMB_FN
+#endif
 #include "audio.h"
 #include "coop.h"
 #include "item_effect_cache.h"

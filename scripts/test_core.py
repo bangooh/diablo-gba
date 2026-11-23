@@ -56,3 +56,4 @@ with tempfile.TemporaryDirectory() as d:
  subprocess.run([str(exe)],check=True)
 
 subprocess.run([sys.executable, str(r/"tests/test_release_regressions.py")], check=True)
+subprocess.run([sys.executable, str(r/"tests/test_build_regressions.py")], check=True)

@@ -17,7 +17,12 @@ static inline unsigned ms_tile(unsigned n){return n<298?outer_map_tile(n):501+n-
 static inline unsigned ms_slot(unsigned t){return t>=530&&t<704?t-530:t>=896&&t<960?t-896+174:t>=266&&t<310?t-266+238:t>=326&&t<342?t-326+282:t>=501&&t<512?t-501+298:0;}
 static inline unsigned ms_ref(unsigned n){return (MAP_VRAM_WORD(0x0600e800u+(n&~1u)*2)>>(16*(n&1)))&65535;}
 static inline void ms_dirty(unsigned n){MS_DIRTY[n>>3]|=1u<<(n&7);}
-static inline int ms_floor(int n,int d){return n>=0?n/d:-((-n+d-1)/d);}
+/* Floor division. Power-of-two divisors (every caller) reduce to an
+ * arithmetic shift, which already rounds toward negative infinity. */
+static inline int ms_floor(int n,int d){
+ if(d==2)return n>>1;if(d==4)return n>>2;if(d==8)return n>>3;
+ return n>=0?n/d:-((-n+d-1)/d);
+}
 static UI_FN void ms_camera(void){automap_camera();}
 static UI_FN void ms_write(unsigned n,unsigned value){unsigned i=MS->refs++;MB->at[i]=(uint16_t)n;MB->value[i]=(uint16_t)value;}
 static UI_FN unsigned ms_current(unsigned n){for(unsigned i=MS->refs;i;i--)if(MB->at[i-1]==n)return MB->value[i-1];return ms_ref(n);}
@@ -51,9 +56,16 @@ static UI_FN unsigned ms_pixels(int tx,int ty,uint32_t out[8]){
     int first=ms_floor((axis?v-right:left+v),4)-1;
     int last=ms_floor((axis?v-left:right+v),4)+1;
     if(first<0)first=0;if(last>79)last=79;
-    for(int run=first;run<=last;run++){
+    /* One fixed line's edge bits are contiguous: skip clear bytes and jump
+     * to set bits. Same edges are drawn; ms_line only ORs pixels. */
+    const uint8_t *edges=axis?MAP_REVEALED:MAP_OUTLINE;unsigned base=(unsigned)fixed*MAP_GRID;
+    for(int run=first;run<=last;){
+     unsigned n=base+(unsigned)run,pending=edges[n>>3]>>(n&7);
+     if(!pending){run+=8-(int)(n&7);continue;}
+     run+=__builtin_ctz(pending);if(run>last)break;
      int x=axis?fixed:run,y=axis?run:fixed;
-     if(map_edge(axis?MAP_REVEALED:MAP_OUTLINE,run,fixed)&&(ms_seen(x,y)||ms_seen(x-!!axis,y-!axis)))ms_line(bits,tx,ty,x,y,axis);
+     if(ms_seen(x,y)||ms_seen(x-!!axis,y-!axis))ms_line(bits,tx,ty,x,y,axis);
+     run++;
     }
    }
   }
@@ -143,8 +155,15 @@ static UI_FN void automap_stream_draw(void){
   MS->x=(int16_t)nx;MS->y=(int16_t)ny;
  }
  if(reveal||map_init)ms_reveal();unsigned examined=0,visited=0,exhausted=0;
- while(visited++<1024&&examined<(game.area||map_init?24u:6u)&&MS->refs<96){
-  unsigned n=MS->cursor;MS->cursor=(n+1)&1023;if(!(MS_DIRTY[n>>3]&(1u<<(n&7))))continue;
+ /* Same 1024-bit budget and visiting order as a bit-by-bit scan, but clear
+  * bytes are skipped at once and the next dirty bit is found with ctz. */
+ (void)visited;unsigned budget=1024;
+ while(budget&&examined<(game.area||map_init?24u:6u)&&MS->refs<96){
+  unsigned n=MS->cursor,pending=MS_DIRTY[n>>3]>>(n&7);
+  if(!pending){unsigned step=8-(n&7);if(step>budget)step=budget;MS->cursor=(n+step)&1023;budget-=step;continue;}
+  unsigned skip=(unsigned)__builtin_ctz(pending);
+  if(skip>=budget){MS->cursor=(n+budget)&1023;budget=0;break;}
+  n+=skip;budget-=skip+1;MS->cursor=(n+1)&1023;
   examined++;int x=nx+(((int)(n&31)-nx)&31),y=ny+(((int)(n>>5)-ny)&31);
   if(y>=ny+24){MS_DIRTY[n>>3]&=~(1u<<(n&7));continue;}
   uint32_t pixels[8];unsigned flip=ms_pixels(x,y,pixels);

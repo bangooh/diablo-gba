@@ -1,11 +1,12 @@
-# Diablo GBA — source distribution (0.9.7.1)
+# Diablo GBA — source distribution (0.9.7.2)
 
-## Version 0.9.7.1
+## Version 0.9.7.2
 
-Fix monster continuous spell damage and Balrog attack timing, restore the missing
-lightning-resistance row, and improve new-game quest seed variation.
-See [fixes and validation limits](docs/RELEASE-0.9.7.1.md).
-Previous [0.9.7 performance and co-op changes](docs/RELEASE-0.9.7.md).
+Restore complete MPQ generation from the public tree, fix hero sprite
+corruption when monsters die in freshly generated builds, and reduce minimap
+and floor-list work per frame.
+See [fixes and validation limits](docs/RELEASE-0.9.7.2.md).
+Previous [0.9.7.1 monster damage and timing fixes](docs/RELEASE-0.9.7.1.md).
 
 
 A C-based GBA-specific engine developed with reference to Devilution and
