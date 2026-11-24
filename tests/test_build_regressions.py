@@ -7,7 +7,7 @@
 7. Options > Minimap shares the D-pad save word without disturbing old saves.
 """
 from pathlib import Path
-import os, re, subprocess, tempfile
+import json, os, re, subprocess, tempfile
 
 r = Path(__file__).resolve().parents[1]
 src = r / 'game-source/src'
@@ -179,3 +179,14 @@ assert 'town_corner_cells' in town_tool and 'len(cells)<=8' in town_tool
 assert 'town_corner_cells[i]' in corner and 'if(a==b&&b==c&&c==d)return 0;' in corner
 assert 'mc_expand_table[row[r*8]]*ink' in corner
 print('Town corner clean-up and corner-pixel fast paths PASS')
+
+# 10. GOG's DIABDAT.MPQ re-encodes gendata\logo.smk. The native-input check
+# and the opening-audio packer accept both known encodings.
+native_map = json.loads((r / 'docs/native-input-map.json').read_text())
+logo = [row for row in native_map if row['mpq'] == 'gendata\\logo.smk']
+gog_logo = 'ff55c72cc092b129ec31b085e1a8db047caca201a2ca3bbcb48d4c079ac3b480'
+assert len(logo) == 1 and logo[0].get('sha256_alternatives') == [gog_logo]
+assert "row.get('sha256_alternatives', [])" in (r / 'scripts/restore_native_inputs.py').read_text()
+opening_audio = (r / 'game-source/tools/pack_front_opening_audio.py').read_text()
+assert gog_logo in opening_audio and 'SOURCE_SHAS[source_sha]' in opening_audio
+print('GOG logo.smk encoding is accepted PASS')

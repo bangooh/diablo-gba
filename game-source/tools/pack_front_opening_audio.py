@@ -16,7 +16,13 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'source_assets/frontend/opening.smk'
-SOURCE_SHA = 'e2c197ac9e17257ccc34ca79b931a10a20c90bec0fd7b587517da217174314b2'
+# Accepted gendata\\logo.smk encodings and their full 16384 Hz PCM asset size:
+# the reference archive and GOG's re-encoded copy (same logos, 8 bytes
+# shorter audio). Only the first 11 seconds are kept, so both pack the same way.
+SOURCE_SHAS = {
+    'e2c197ac9e17257ccc34ca79b931a10a20c90bec0fd7b587517da217174314b2': 266216,  # reference archive
+    'ff55c72cc092b129ec31b085e1a8db047caca201a2ca3bbcb48d4c079ac3b480': 266208,  # GOG
+}
 RATE = 8192
 SECONDS = 11
 SAMPLES = RATE * SECONDS
@@ -37,13 +43,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
-    assert sha(SOURCE.read_bytes()) == SOURCE_SHA, 'Unexpected opening source'
+    source_sha = sha(SOURCE.read_bytes())
+    assert source_sha in SOURCE_SHAS, 'Unexpected opening source'
 
     # Reconstruct the old direct PCM asset for a source-derived comparison.
     # It included all 16 seconds plus the same 4096-byte guard and alignment.
     legacy = decode(16384, 's8')
     legacy_asset = legacy + bytes((-len(legacy)) % 4 + GUARD)
-    assert len(legacy_asset) == 266216
+    assert len(legacy_asset) == SOURCE_SHAS[source_sha]
     assert not any(legacy[SECONDS * 16384:]), 'White-logo PCM must be silent'
 
     converted = decode(RATE, 's8')
@@ -72,7 +79,7 @@ def main():
         '',
     ])
     report = {
-        'source': str(SOURCE.relative_to(ROOT)), 'source_sha256': SOURCE_SHA,
+        'source': str(SOURCE.relative_to(ROOT)), 'source_sha256': source_sha,
         'format': 'signed8 mono PCM; direct ROM DMA; no runtime decoder',
         'native_rate': 22050, 'previous_rate': 16384, 'output_rate': RATE,
         'blue_seconds': SECONDS, 'blue_samples': SAMPLES,
