@@ -8,15 +8,15 @@
 enum { OPTIONS_GAMMA_LEVELS=20, OPTIONS_VOLUME_TAG=0x534e4400u };
 /* The D-pad word stores the rotation in bits0-1 and the minimap layout in
  * bit2. Zero is the default Right corner map, so older saves load as Right. */
-enum { OPTIONS_DPAD_TAG=0x44504100u, OPTIONS_MAP_CENTER=4u };
-enum { OPTIONS_MAP_RIGHT,OPTIONS_MAP_CENTER_LAYOUT,OPTIONS_MAP_COUNT };
+enum { OPTIONS_DPAD_TAG=0x44504100u, OPTIONS_MAP_BIT=4u };
+enum { OPTIONS_MAP_RIGHT,OPTIONS_MAP_CENTER,OPTIONS_MAP_COUNT };
 static const char *const options_map_labels[]={"Right","Center"};
 enum { OPTIONS_DPAD_ORIGINAL,OPTIONS_DPAD_CCW,OPTIONS_DPAD_CW,OPTIONS_DPAD_COUNT };
 static const char *const options_dpad_labels[]={"Original","CCW-45degree","CW-45degree"};
 static inline unsigned options_dpad_valid(unsigned saved){return (saved&~7u)==OPTIONS_DPAD_TAG&&(saved&3u)<OPTIONS_DPAD_COUNT;}
-static inline unsigned options_dpad_pack(unsigned rotation,unsigned map_layout){return OPTIONS_DPAD_TAG|rotation|(map_layout?OPTIONS_MAP_CENTER:0);}
+static inline unsigned options_dpad_pack(unsigned rotation,unsigned map_layout){return OPTIONS_DPAD_TAG|rotation|(map_layout==OPTIONS_MAP_CENTER?OPTIONS_MAP_BIT:0);}
 __attribute__((section(".text.ui"))) static inline unsigned options_dpad_unpack(unsigned saved){return options_dpad_valid(saved)?saved&3u:OPTIONS_DPAD_ORIGINAL;}
-__attribute__((section(".text.ui"))) static inline unsigned options_map_unpack(unsigned saved){return options_dpad_valid(saved)&&(saved&OPTIONS_MAP_CENTER)?OPTIONS_MAP_CENTER_LAYOUT:OPTIONS_MAP_RIGHT;}
+__attribute__((section(".text.ui"))) static inline unsigned options_map_unpack(unsigned saved){return options_dpad_valid(saved)&&(saved&OPTIONS_MAP_BIT)?OPTIONS_MAP_CENTER:OPTIONS_MAP_RIGHT;}
 /* Rotate screen directions, including diagonals, before gameplay or local
  * wire encoding. Never run this on UI navigation or packed item commands. */
 static __attribute__((section(".text.ui"),noinline)) unsigned options_dpad_keys(unsigned held,unsigned rotation){

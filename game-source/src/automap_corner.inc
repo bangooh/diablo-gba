@@ -133,7 +133,8 @@ static UI_FN void mc_draw(void){
  unsigned revision=game.area?0:game_explore_revision();
  if(map_last_x==-1||map_last_area!=game.area||!MS->corner){
   mc_build();MS->revision=revision;
-  MS->x=(int16_t)p;MS->y=(int16_t)q;MS->cursor=MS->refs=MS->pixels=MS->ready=0;MS->used=1;MS->corner=1;
+  /* cursor: rows built; pixels: box changed since the last upload. */
+  MS->x=(int16_t)p;MS->y=(int16_t)q;MS->cursor=MS->pixels=MS->ready=0;MS->corner=1;
   map_last_x=game.x;map_last_y=game.y;map_last_area=game.area;map_screen_fallback=map_screen_live=0;map_init=1;map_pending=3;return;
  }
  if(MS->revision!=revision){MS->revision=revision;if(mc_reveal())MS->pixels=1;}

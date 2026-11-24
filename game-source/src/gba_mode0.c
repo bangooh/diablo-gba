@@ -32,6 +32,7 @@ _Static_assert(PROP_BARRELEX_BASE==PROP_REGIONAL_DOORS_BASE+PROP_REGIONAL_DOORS_
 extern const uint8_t asset_dungeon_art_raw[];
 #include "../generated/fixed_wall_art.h"
 #include "dungeon_doors.h"
+#include "options.h"
 #include "../generated/floor_variants.h"
 #include "../generated/floor_actors.h"
 #include "../generated/more_monsters.h"
@@ -239,10 +240,10 @@ volatile unsigned map_unique_tiles,map_tile_overflows;
 /* Options: Right is the compact corner map, Center the original full map.
  * A layout change discards the resident map so the next draw rebuilds it. */
 static UI_FN void map_layout_set(unsigned layout){
- layout=layout?1u:0u;if(layout==map_layout)return;
+ layout=layout==OPTIONS_MAP_CENTER?OPTIONS_MAP_CENTER:OPTIONS_MAP_RIGHT;if(layout==map_layout)return;
  map_layout=(uint8_t)layout;map_last_x=-1;map_last_area=-1;map_init=1;map_pending=0;
 }
-static inline unsigned map_corner(void){return !map_layout;}
+static inline unsigned map_corner(void){return map_layout==OPTIONS_MAP_RIGHT;}
 /* ROM-resident renderer code: the cartridge bus is 16 bits wide, so a Thumb
  * opcode is one fetch and an ARM opcode two. Applied to the measured hot ROM
  * functions whose Thumb build does not push large helpers into IWRAM
@@ -972,7 +973,7 @@ static __attribute__((noinline)) void terrain_piece(uint8_t *pixels,uint8_t *dep
 /* Fully populated75% fixed-wall tiles have a known alpha mask (odd rows lose
  * odd columns); no per-pixel transparency discovery is needed while the
  * camera exposes new terrain. */
-static __attribute__((noinline)) void terrain_checker(uint8_t *pixels,uint8_t *depth,const uint8_t *piece,unsigned z){
+static __attribute__((noinline)) void terrain_stipple(uint8_t *pixels,uint8_t *depth,const uint8_t *piece,unsigned z){
  uint32_t *out=(uint32_t*)pixels,*dst=(uint32_t*)depth;const uint32_t *src=(const uint32_t*)piece;
  for(unsigned p=0;p<16;p++){
   unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;
@@ -1087,12 +1088,12 @@ static void stream_dungeon(void){
                     const uint8_t *piece=wa?wa->art+(wa->tiles[tile]>>2)*64:extra?asset_floor_variants+floor_variant_tiles[tile]*64:asset_dungeon_art_raw+dart_tile_ids[tile]*64;
                     uint8_t z=(wa?(occludes[cell]&1):extra?0:dart_occludes[variant])?(uint8_t)(foot-py):0;
                     unsigned fixed_half=!wa&&!extra&&(stored&(dx<16?0x4000:0x8000))&&(!dart_door[stored&0x3fff]||dy<48||variant!=(stored&0x3fff));
-                    if(fixed_half){unsigned id=dy<64?fixed_wall_upper[dx>=16][dart_tile_ids[tile]]:fixed_wall_lower[variant*8+((dy-64)>>3)*4+(dx>>3)];piece=fixed_wall_art+id*64;kind=fixed_wall_checker[id]?3:2;}
+                    if(fixed_half){unsigned id=dy<64?fixed_wall_upper[dx>=16][dart_tile_ids[tile]]:fixed_wall_lower[variant*8+((dy-64)>>3)*4+(dx>>3)];piece=fixed_wall_art+id*64;kind=fixed_wall_stipple[id]?3:2;}
                     unsigned fixed_world=wa&&z&&(occludes[cell]&(dx<16?0x40:0x80))&&(!(occludes[cell]&0x20)||dy<(int)height-32);
                     if(fixed_world)terrain_fixed75(pixels,town_depth[slot],piece,z,dx,dy,height);
                     else if(!z&&prop_composed)terrain_ground(pixels,town_depth[slot],piece);
                     else if(kind==1){dma(piece,pixels,64);for(int p=0;p<16;p++)((uint32_t*)town_depth[slot])[p]=z*0x01010101u;}
-                    else if(kind==3)terrain_checker(pixels,town_depth[slot],piece,z);
+                    else if(kind==3)terrain_stipple(pixels,town_depth[slot],piece,z);
                     else terrain_piece(pixels,town_depth[slot],piece,z);
                     }
                     }

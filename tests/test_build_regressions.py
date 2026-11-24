@@ -168,6 +168,6 @@ print('Right corner minimap uses fixed box tiles under a centred hero PASS')
 wall_tool = (r / 'game-source/tools/pack_fixed_wall_art.py').read_text()
 assert 'not (p&1 and (p//8)&1)' in wall_tool and 'not (x&1 and y&1)' in wall_tool
 assert '((p%8+p//8)&1)' not in wall_tool and '((x+y)&1)' not in wall_tool
-checker = frames[frames.index('void terrain_checker('):]
-assert 'unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;' in checker[:600]
+stipple = frames[frames.index('void terrain_stipple('):]
+assert 'unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;' in stipple[:600]
 print('Fixed walls on floors 1-4 keep the 75% stipple PASS')
