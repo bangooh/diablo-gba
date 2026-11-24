@@ -79,7 +79,7 @@ These DIABDAT.MPQ files completed the whole Linux x86-64 pipeline:
 
 | Source | Size | MD5 | SHA-256 |
 | --- | ---: | --- | --- |
-| Reference archive (built 0.9.7.1–0.9.7.6) | 517,501,242 bytes | `68f049866b44688a7af65ba766bef75a` | `6bc120a603fdb383ff91f374e7db599765d6230d81e5a4c1b33f8254911774e7` |
+| Reference archive (built 0.9.7.1–0.9.7.7) | 517,501,242 bytes | `68f049866b44688a7af65ba766bef75a` | `6bc120a603fdb383ff91f374e7db599765d6230d81e5a4c1b33f8254911774e7` |
 | GOG `setup_diablo_1.09_hellfire_v4_(78466).exe` | 517,501,282 bytes | `011bc6518e6166206231080a4440b373` | `63fb47d9c76484024c7640d90ab6b7ec5e13f567a7e1a917b6c03a6631d3f2b0` |
 
 The two archives differ only in `gendata\logo.smk`: GOG re-encoded the

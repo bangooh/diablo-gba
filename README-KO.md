@@ -1,11 +1,12 @@
-# Diablo GBA 0.9.7.6 source distribution — English / Korean
+# Diablo GBA 0.9.7.7 source distribution — English / Korean
 
-## Version 0.9.7.6
+## Version 0.9.7.7
 
-Stop diagonal walking from wobbling, and show the LEVEL/DIFFICULTY label in the
-minimap's colour only while the minimap is on.
-See [changes and validation limits](docs/RELEASE-0.9.7.6.md).
-Previous [0.9.7.5 corner minimap and colour ending](docs/RELEASE-0.9.7.5.md).
+Move the corner minimap diagonally on diagonal steps, and target enemies as
+far below the hero as above.
+See [changes and validation limits](docs/RELEASE-0.9.7.7.md).
+Previous [0.9.7.6 diagonal wobble and minimap label](docs/RELEASE-0.9.7.6.md).
+
 
 
 
@@ -19,6 +20,12 @@ The package includes game code, MPQ conversion tools and existing attributed
 3×5, 5×5 and 7×7 font inputs. Game artwork, audio, videos, MPQs, ROMs and saves
 are not included. The 7×7 font is stored in 8×8 cells. Existing font attribution
 notices are preserved.
+
+### Version 0.9.7.7
+
+The corner minimap moves diagonally on diagonal steps, and enemies below the
+hero can be targeted as far away as enemies above.
+See [changes and validation limits](docs/RELEASE-0.9.7.7.md).
 
 ### Version 0.9.7.6
 
@@ -110,7 +117,7 @@ Public repository: https://github.com/bangooh/diablo-gba
 
 ## Korean / 한국어
 
-### Diablo GBA 0.9.7.6 소스 배포본
+### Diablo GBA 0.9.7.7 소스 배포본
 
 Bangoo의 비공식 팬 프로젝트입니다. Devilution과 DevilutionX를 참고한
 C 기반 GBA 전용 엔진이며 Blizzard 또는 Nintendo의 공식 제품이 아닙니다.
@@ -119,6 +126,13 @@ DevilutionX와 team Mupung에 특별히 감사드립니다.
 게임 코드, MPQ 변환 도구, 출처가 표시된 기존 3×5·5×5·7×7 폰트 입력을
 포함합니다. 게임 이미지·음원·영상·MPQ·ROM·세이브는 포함하지 않습니다.
 7×7 폰트는 8×8 셀에 저장됩니다. 폰트의 기존 출처 고지는 유지합니다.
+
+### 버전 0.9.7.7
+
+대각선으로 걸을 때 오른쪽 위 미니맵이 가로·세로로 번갈아 계단처럼 움직이던 문제를
+고쳤습니다. 화면 아래쪽(6시 방향) 적을 위쪽 적과 같은 거리에서 타겟팅할 수
+있습니다.
+수정 내용과 검증 범위는 [변경 기록](docs/RELEASE-0.9.7.7.md)을 참고하세요.
 
 ### 버전 0.9.7.6
 

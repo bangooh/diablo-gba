@@ -1,11 +1,12 @@
-# Diablo GBA — source distribution (0.9.7.6)
+# Diablo GBA — source distribution (0.9.7.7)
 
-## Version 0.9.7.6
+## Version 0.9.7.7
 
-Stop diagonal walking from wobbling, and show the LEVEL/DIFFICULTY label in the
-minimap's colour only while the minimap is on.
-See [changes and validation limits](docs/RELEASE-0.9.7.6.md).
-Previous [0.9.7.5 corner minimap and colour ending](docs/RELEASE-0.9.7.5.md).
+Move the corner minimap diagonally on diagonal steps, and target enemies as
+far below the hero as above.
+See [changes and validation limits](docs/RELEASE-0.9.7.7.md).
+Previous [0.9.7.6 diagonal wobble and minimap label](docs/RELEASE-0.9.7.6.md).
+
 
 
 
@@ -17,6 +18,12 @@ This source-available package includes the runtime, MPQ asset-generation
 scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
+
+## Version 0.9.7.6
+
+Stop diagonal walking from wobbling, and show the LEVEL/DIFFICULTY label in the
+minimap's colour only while the minimap is on.
+See [changes and validation limits](docs/RELEASE-0.9.7.6.md).
 
 ## Version 0.9.7.5
 

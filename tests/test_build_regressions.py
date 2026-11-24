@@ -215,3 +215,7 @@ hero = corner[corner.index('void mc_hero(int *p,int *q){'):]
 hero = hero[:hero.index('\n}\n')]
 assert 'dx==2*dy||dx==-2*dy' in hero and '*p=tx+(dx==2*dy?1:-1)*(*q-1-ty);' in hero
 print('Corner map moves diagonally on diagonals PASS')
+# 13. Ranged targeting reaches as far below the hero as above it.
+ctl = (src / 'controller.c').read_text()
+assert 'dx+dy < -8||dx+dy > 8)return 0;' in ctl
+print('Targeting range is symmetric above and below PASS')

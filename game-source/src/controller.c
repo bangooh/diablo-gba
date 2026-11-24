@@ -54,12 +54,14 @@ static int target_cell_clear(const Game *g,int x,int y){
 }
 #endif
 /* Shared ranged visibility contract: alive, on screen, unobstructed shot.
+ * The window is 8 cells (64px) both above and below the hero: the HUD row
+ * below is transparent between the orbs, so a foot at y=148 is in view.
  * Strict corner traversal also prevents shooting through diagonal walls. */
 int game_target_visible(const Game *g,int i){
  if(g->area||i<0||i>=MAX_ENEMIES||g->enemies[i].alive!=1||g->enemies[i].hp<=0||game_enemy_hidden(g,i))return 0;
  int x=g->x,y=g->y,tx=g->enemies[i].x,ty=g->enemies[i].y;
  int dx=tx-x,dy=ty-y;
- if(abs_i(dx)>8||abs_i(dy)>8||abs_i(dx-dy)>7||dx+dy < -8||dx+dy > 6)return 0;
+ if(abs_i(dx)>8||abs_i(dy)>8||abs_i(dx-dy)>7||dx+dy < -8||dx+dy > 8)return 0;
  int sx=sign(dx),sy=sign(dy);dx=abs_i(dx);dy=abs_i(dy);int err=dx-dy;
 #if PERF_BATCH_WALK
  uint16_t cells[24];unsigned n=0;
