@@ -441,7 +441,7 @@ static UI_FN void hud_font_color_copy(void *destination,unsigned color){
 #include "../generated/dual_font.h"
 #include "../generated/overlay_font.h"
 static unsigned overlay_level=~0u;
-static uint8_t overlay_fg,overlay_bg;
+static uint8_t overlay_bg;
 /* The panel center has no artwork. Reuse its first two rows for 40 large
  * glyphs; panel_map must map those cells to transparent tile128, never here.
  * This leaves the automap dictionary and loading bitmap allocation intact. */
@@ -454,7 +454,7 @@ static UI_FN void unpack_large_font(void){
         dma((uint8_t*)load_buffer+22*64,(void*)0x0600a8c0,18*64);
     }
     if(lz_decode(game.area?asset_town_overlay_font:asset_dungeon_overlay_font,load_buffer,sizeof(load_buffer))==OVERLAY_FONT_BYTES){
-        overlay_fg=((uint8_t*)load_buffer)[9];overlay_bg=((uint8_t*)load_buffer)[8];
+        overlay_bg=((uint8_t*)load_buffer)[8];
         dma(load_buffer,(void*)0x0600b280,13*64);
         dma((uint8_t*)load_buffer+13*64,(void*)0x0600b7c0,OVERLAY_FONT_BYTES-13*64);
     }
@@ -1450,13 +1450,14 @@ static UI_FN int overlay_ink(const char *text,unsigned len,int x,int y){
     return letters[n]&&(overlay_rows[n][y-1]&(4u>>col));
 }
 static UI_FN __attribute__((target("thumb"),minsize)) void player_overlay(void){
-    unsigned level=game.area?0:dungeon_level,key=level|((unsigned)game_difficulty<<8);
+    /* LEVEL/DIFFICULTY follow the minimap: same ink, shown only while it is. */
+    unsigned level=game.area?0:dungeon_level,key=level|((unsigned)game_difficulty<<8)|((unsigned)map_line_color<<16);
     if(overlay_level!=key){
         char line[13]="LEVEL: ";unsigned len=7;
         if(!level||level==REGION_KING||level==REGION_VILE||level==REGION_BONE||level==REGION_WATER){const char *town=level==REGION_WATER?"WATER SUPPLY":level==REGION_BONE?"BONE LAIR":level==REGION_VILE?"VILE LAIR":level?"KING LAIR":"TRISTRAM";len=level==REGION_WATER?12:level?9:8;for(unsigned i=0;i<len;i++)line[i]=town[i];}
         else{if(level>=10)line[len++]=(char)('0'+level/10);line[len++]=(char)('0'+level%10);}
         line[len]=0;
-        uint8_t fg=overlay_fg,bg=overlay_bg;
+        uint8_t fg=map_line_color,bg=overlay_bg;
         uint8_t *pixels=(uint8_t*)load_buffer;
         for(unsigned tile=0;tile<7;tile++)for(int y=0;y<8;y++)for(int x=0;x<8;x++){
             int px=(int)tile*8+x;
@@ -1476,7 +1477,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void player_overlay(void){
     }
     for(unsigned y=0;y<2;y++)for(unsigned x=0;x<23;x++){
         unsigned n=(y==0?0:5)+x;
-        R16(0x0600d800+(y*32+x)*2)=(uint16_t)(x<(y==0?7:11)?(!y&&x>=5?171+x-5:n<13?202+n:223+n-13):128);
+        R16(0x0600d800+(y*32+x)*2)=(uint16_t)(map_visible&&!map_init&&x<(y==0?7:11)?(!y&&x>=5?171+x-5:n<13?202+n:223+n-13):128);
     }
 }
 #include "infopanel.inc"
