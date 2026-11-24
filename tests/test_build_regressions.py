@@ -207,3 +207,11 @@ for sx, sy in ((16, -8), (-16, 8), (16, 8), (-16, -8)):
             assert not (y != prev[1] and x == prev[0]), (sx, sy, total, e)
             prev = (x, y)
 print('Diagonal motion moves Y only with X PASS')
+
+# 12. The corner map steps both axes together on 2:1 diagonals: while the
+# camera tracks a diagonal step, X is derived from the rounded Y.
+corner = (src / 'automap_corner.inc').read_text()
+hero = corner[corner.index('void mc_hero(int *p,int *q){'):]
+hero = hero[:hero.index('\n}\n')]
+assert 'dx==2*dy||dx==-2*dy' in hero and '*p=tx+(dx==2*dy?1:-1)*(*q-1-ty);' in hero
+print('Corner map moves diagonally on diagonals PASS')
