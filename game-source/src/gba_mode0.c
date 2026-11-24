@@ -1161,11 +1161,18 @@ static UI_FN void move_to(Motion *m,int x,int y,int oldx,int oldy,int duration){
     m->elapsed=0;m->total=duration;m->dir=direction(x-oldx,y-oldy);
 }
 /* Inlined into ARM callers; the out-of-line copy serves Thumb ROM callers. */
+/* Step whole pixels from the start, flooring each axis's distance travelled
+ * rather than its signed coordinate. On2:1 screen diagonals Y then moves
+ * exactly when every other X pixel does, in all four directions, instead of
+ * one frame apart (a visible stair-step wobble while walking diagonally). */
 static __attribute__((section(".text.ui"))) void advance(Motion *m){
     if(m->elapsed<m->total){
         ++m->elapsed;
-        m->x=m->sx+(m->tx-m->sx)*m->elapsed/m->total;
-        m->y=m->sy+(m->ty-m->sy)*m->elapsed/m->total;
+        if(m->elapsed==m->total){m->x=m->tx;m->y=m->ty;return;}
+        int32_t dx=m->tx-m->sx,dy=m->ty-m->sy;
+        int32_t px=(int32_t)(((uint32_t)(dx<0?-dx:dx)*m->elapsed/m->total)&~255u);
+        int32_t py=(int32_t)(((uint32_t)(dy<0?-dy:dy)*m->elapsed/m->total)&~255u);
+        m->x=m->sx+(dx<0?-px:px);m->y=m->sy+(dy<0?-py:py);
     }
 }
 static UI_FN void reset_visuals(void){

@@ -190,3 +190,20 @@ assert "row.get('sha256_alternatives', [])" in (r / 'scripts/restore_native_inpu
 opening_audio = (r / 'game-source/tools/pack_front_opening_audio.py').read_text()
 assert gog_logo in opening_audio and 'SOURCE_SHAS[source_sha]' in opening_audio
 print('GOG logo.smk encoding is accepted PASS')
+
+# 11. Motion floors each axis's travelled distance, so on 2:1 screen
+# diagonals Y never moves on a frame where X does not (all four directions).
+adv = frames[frames.index('void advance(Motion *m){'):]
+adv = adv[:adv.index('\n}\n')]
+assert '&~255u' in adv and 'dx<0?-dx:dx' in adv and 'dy<0?-dy:dy' in adv
+def step(d, e, t):
+    p = (abs(d) * e // t) & ~255
+    return -p if d < 0 else p
+for sx, sy in ((16, -8), (-16, 8), (16, 8), (-16, -8)):
+    for total in (18, 24, 27, 30, 36):
+        prev = (0, 0)
+        for e in range(1, total):
+            x, y = step(sx * 256, e, total) >> 8, step(sy * 256, e, total) >> 8
+            assert not (y != prev[1] and x == prev[0]), (sx, sy, total, e)
+            prev = (x, y)
+print('Diagonal motion moves Y only with X PASS')
