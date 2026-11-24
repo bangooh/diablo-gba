@@ -66,6 +66,7 @@ static UI_FN void ending_common(unsigned *page){
   * loop0..4..1 at the audio clock's 5FPS; each step decodes one delta. */
  uint8_t *current=(uint8_t*)town_map+38400,*delta=current+38400,*final=delta+38400;
  static const uint8_t sequence[8]={0,1,2,3,4,3,2,1};
+ _Static_assert(ENDING_COMMON_LOOP_FRAMES==5,"ping-pong sequence covers five loop frames");
  lz_block(asset_ending_common,0,current,38400);
  lz_block(asset_ending_common,ENDING_COMMON_FINAL_CHUNK,final,38400);
  unsigned prev=(~R16(0x04000130))&1023,shown=0,step=0,closing=0;

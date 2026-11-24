@@ -168,6 +168,14 @@ print('Right corner minimap uses fixed box tiles under a centred hero PASS')
 wall_tool = (r / 'game-source/tools/pack_fixed_wall_art.py').read_text()
 assert 'not (p&1 and (p//8)&1)' in wall_tool and 'not (x&1 and y&1)' in wall_tool
 assert '((p%8+p//8)&1)' not in wall_tool and '((x+y)&1)' not in wall_tool
-checker = frames[frames.index('void terrain_checker('):]
-assert 'unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;' in checker[:600]
+stipple = frames[frames.index('void terrain_stipple('):]
+assert 'unsigned mask=(p&2)?0x00ff00ffu:0xffffffffu;' in stipple[:600]
 print('Fixed walls on floors 1-4 keep the 75% stipple PASS')
+
+# 9. The town corner map drops one-cell obstacles and unreachable pockets
+# from a generated list; the corner renderer only evaluates corner pixels.
+town_tool = (r / 'game-source/tools/pack_town_minimap_stage80.py').read_text()
+assert 'town_corner_cells' in town_tool and 'len(cells)<=8' in town_tool
+assert 'town_corner_cells[i]' in corner and 'if(a==b&&b==c&&c==d)return 0;' in corner
+assert 'mc_expand_table[row[r*8]]*ink' in corner
+print('Town corner clean-up and corner-pixel fast paths PASS')

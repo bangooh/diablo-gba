@@ -502,7 +502,7 @@ static UI_FN __attribute__((target("thumb"),minsize)) void menu_input(unsigned p
             /* Visible order: CCW, Original, CW; A advances like Right. */
             dpad_rotation=(dpad_rotation+((pressed&KEY_LEFT)?1:2))%OPTIONS_DPAD_COUNT;
         }
-        if(menu_choice==4&&(pressed&(KEY_LEFT|KEY_RIGHT|KEY_A)))map_layout_set(!map_layout);
+        if(menu_choice==4&&(pressed&(KEY_LEFT|KEY_RIGHT|KEY_A)))map_layout_set(map_layout==OPTIONS_MAP_RIGHT?OPTIONS_MAP_CENTER:OPTIONS_MAP_RIGHT);
         if((pressed&KEY_A)&&menu_choice==5){menu_mode=1;menu_choice=coop_active&&game.hp>0?0:1;}
         else if(menu_choice<5&&(pressed&(KEY_LEFT|KEY_RIGHT)))audio_ui(AUDIO_UI_MOVE);
     }else if(pressed&KEY_A){

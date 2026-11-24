@@ -41,7 +41,7 @@ header='#pragma once\n/* Generated original-texture fixed walls; ground diamond 
 header+='static const uint32_t fixed_wall_words[]={'+','.join(hex(x)+'u' for x in words)+'};\n'
 header+='static const uint16_t fixed_wall_upper[2]['+str(len(upper[0]))+']={'+','.join('{'+','.join(map(str,a))+'}' for a in upper)+'};\n'
 header+='static const uint16_t fixed_wall_lower[]={'+','.join(map(str,lower))+'};\n'
-header+='static const uint8_t fixed_wall_checker[]={'+','.join(str(int(all(bool(value)==(not (i&1 and (i//8)&1)) for i,value in enumerate(tile)))) for tile in parts)+'};\n'
+header+='/* 1: fully populated 75% stipple tile with the fixed alpha mask. */\nstatic const uint8_t fixed_wall_stipple[]={'+','.join(str(int(all(bool(value)==(not (i&1 and (i//8)&1)) for i,value in enumerate(tile)))) for tile in parts)+'};\n'
 header+='#define fixed_wall_art ((const uint8_t*)fixed_wall_words)\n'
 (r/'generated/fixed_wall_art.h').write_text(header)
 report={'unique_tiles':len(parts),'art_bytes':len(parts)*64,'index_bytes':(sum(map(len,upper))+len(lower))*2,'ground_pixels_preserved':preserved,'rule':'dy <64+abs(dx-16)/2: original texture minus odd-row odd-column pixels (75%); otherwise original ground'}
