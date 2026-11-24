@@ -207,3 +207,8 @@ for sx, sy in ((16, -8), (-16, 8), (16, 8), (-16, -8)):
             assert not (y != prev[1] and x == prev[0]), (sx, sy, total, e)
             prev = (x, y)
 print('Diagonal motion moves Y only with X PASS')
+
+# 13. Ranged targeting reaches as far below the hero as above it.
+ctl = (src / 'controller.c').read_text()
+assert 'dx+dy < -8||dx+dy > 8)return 0;' in ctl
+print('Targeting range is symmetric above and below PASS')
