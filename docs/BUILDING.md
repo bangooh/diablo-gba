@@ -75,11 +75,18 @@ validated end to end. Native macOS generation is also not supported by this entr
 
 The entry point now checks dependencies and prints input size, MD5 and SHA-256
 before extracting assets. The final generation report also records both hashes.
-**No verified reference MPQ digest is currently published in this repository.**
-The 517501242-byte size is a reference size, not proof of matching content.
-Printed hashes identify your file; they do not by themselves establish compatibility.
-If you already have a trusted expected SHA-256, pass
-`--expected-mpq-sha256 HEX_DIGEST` to stop on a mismatch.
+This DIABDAT.MPQ completed the whole Linux x86-64 pipeline and built
+0.9.7.1 through 0.9.7.5:
+
+| Size | MD5 | SHA-256 |
+| ---: | --- | --- |
+| 517,501,242 bytes | `68f049866b44688a7af65ba766bef75a` | `6bc120a603fdb383ff91f374e7db599765d6230d81e5a4c1b33f8254911774e7` |
+
+This is a tested input, not the only possible one. It does not reproduce the
+0.9.7 release ROM byte for byte, because that release used private ending
+stills and wall/prop art. If your hashes match, problems more likely come from the
+environment (tools, Zig, platform) than from the archive. To stop early on a
+different file, pass `--expected-mpq-sha256` with the SHA-256 above.
 
 You can calculate hashes without installing the generation dependencies:
 
