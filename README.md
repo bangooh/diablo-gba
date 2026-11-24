@@ -1,12 +1,12 @@
-# Diablo GBA — source distribution (0.9.7.5)
+# Diablo GBA — source distribution (0.9.7.6)
 
-## Version 0.9.7.5
+## Version 0.9.7.6
 
-Add a 64×64 corner minimap (Options > Minimap: Right, the new default, or
-Center), colour the ending movie, animate the epilogue and restore the 75%
-wall stipple on floors 1–4.
-See [changes and validation limits](docs/RELEASE-0.9.7.5.md).
-Previous [0.9.7.4 wall stipple fix](docs/RELEASE-0.9.7.4.md).
+Stop diagonal walking from wobbling, and show the LEVEL/DIFFICULTY label in the
+minimap's colour only while the minimap is on.
+See [changes and validation limits](docs/RELEASE-0.9.7.6.md).
+Previous [0.9.7.5 corner minimap and colour ending](docs/RELEASE-0.9.7.5.md).
+
 
 
 A C-based GBA-specific engine developed with reference to Devilution and
@@ -17,6 +17,13 @@ This source-available package includes the runtime, MPQ asset-generation
 scripts, and approved custom font inputs with their existing attribution.
 Game artwork, sound, music, videos, ROMs and save fixtures are not included.
 Repository: https://github.com/bangooh/diablo-gba
+
+## Version 0.9.7.5
+
+Add a 64×64 corner minimap (Options > Minimap: Right, the new default, or
+Center), colour the ending movie, animate the epilogue and restore the 75%
+wall stipple on floors 1–4.
+See [changes and validation limits](docs/RELEASE-0.9.7.5.md).
 
 ## Version 0.9.7.4
 
