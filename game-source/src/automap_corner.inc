@@ -163,10 +163,21 @@ static UI_FN void mc_expand(void){
   for(unsigned r=0;r<8;r++)*out++=mc_expand_table[row[r*8]]*ink;
  }
 }
-/* Hero position in corner pixels, following the camera's sub-cell motion. */
+/* Hero position in corner pixels, following the camera's sub-cell motion.
+ * A 2:1 screen diagonal moves the box one pixel on both axes per cell, so
+ * rounding X and Y separately let them step on different frames (a stair).
+ * While the camera tracks such a step, round Y once and derive X from it,
+ * anchored at the destination, as automap_camera does for the full map. */
 static UI_FN void mc_hero(int *p,int *q){
- *p=map_round(cam_x+120-(game.area?1536:DUNGEON_ORIGIN),16);
- *q=map_round(cam_y+84-(game.area?128:72),8)+1;
+ int ox=game.area?1536:DUNGEON_ORIGIN,oy=game.area?128:72;
+ *p=map_round(cam_x+120-ox,16);
+ *q=map_round(cam_y+84-oy,8)+1;
+ const Motion *m=&motion[0];int dx=m->tx-m->sx,dy=m->ty-m->sy;
+ if(m->elapsed<m->total&&dy&&(dx==2*dy||dx==-2*dy)&&
+    cam_x==(m->x>>8)-120&&cam_y==(m->y>>8)-84){
+  int ty=map_round(m->ty-(oy<<8),2048),tx=map_round(m->tx-(ox<<8),4096);
+  *p=tx+(dx==2*dy?1:-1)*(*q-1-ty);
+ }
 }
 static UI_FN void mc_draw(void){
  if(!map_visible||map_pending)return;
