@@ -687,7 +687,10 @@
   {
     "local": "frontend/opening.smk",
     "mpq": "gendata\\logo.smk",
-    "sha256": "e2c197ac9e17257ccc34ca79b931a10a20c90bec0fd7b587517da217174314b2"
+    "sha256": "e2c197ac9e17257ccc34ca79b931a10a20c90bec0fd7b587517da217174314b2",
+    "sha256_alternatives": [
+      "ff55c72cc092b129ec31b085e1a8db047caca201a2ca3bbcb48d4c079ac3b480"
+    ]
   },
   {
     "local": "frontend/selhero.pcx",

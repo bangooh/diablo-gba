@@ -28,7 +28,8 @@ def main():
             if name not in cache:
                 cache[name] = read_mpq(archive, name)
             data = cache[name]
-            if hashlib.sha256(data).hexdigest() != row['sha256']:
+            # A few entries list known re-encodings (GOG) beside the retail digest.
+            if hashlib.sha256(data).hexdigest() not in [row['sha256'], *row.get('sha256_alternatives', [])]:
                 raise ValueError('Native source differs: ' + name)
             target = args.project / 'source_assets' / local
             target.parent.mkdir(parents=True, exist_ok=True)
